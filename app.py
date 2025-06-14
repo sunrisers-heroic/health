@@ -5,7 +5,7 @@ from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenP
 # Page config
 st.set_page_config(page_title="🩺 Health AI Assistant", layout="centered", page_icon="🩺")
 
-# Custom CSS for chat bubbles with a health-themed color palette
+# Custom CSS for chat bubbles and layout
 st.markdown("""
     <style>
         body {
@@ -40,18 +40,23 @@ st.markdown("""
             display: flex;
             flex-direction: column;
         }
+        .section-title {
+            color: #007acc;
+            font-size: 1.2em;
+            margin-top: 1em;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# Title and description
-st.title("🩺 Health AI Assistant")
-st.markdown("Ask anything about health, wellness, medical advice, or general biology!")
+# Sidebar Navigation
+st.sidebar.title("🩺 Menu")
+page = st.sidebar.radio("Go to", ["🏠 Home", "🧑‍⚕️ Doctor Mode", "🧍 Patient Mode", "🤖 AI Chatbot"])
 
-# Initialize chat history
+# Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Load Watsonx credentials from Streamlit secrets
+# Load Watsonx credentials from secrets
 try:
     credentials = {
         "url": st.secrets["WATSONX_URL"],
@@ -79,33 +84,86 @@ except Exception as e:
     st.error(f"🚨 Error initializing LLM: {str(e)}")
     st.stop()
 
-# Display chat messages
-for message in st.session_state.messages:
-    if isinstance(message, tuple):
-        role, content = message
+# ------------------------------ HOME PAGE ------------------------------
+if page == "🏠 Home":
+    st.title("Welcome to 🩺 Health AI Assistant")
+    st.markdown("""
+        This application offers a wide range of healthcare tools including:
+        
+        - 🔍 AI-powered medical Q&A  
+        - 👨‍⚕️ Doctor mode for managing patients  
+        - 🧍 Self-assessment for patients  
+        - 💡 General health advice  
+
+        Choose an option from the sidebar to begin!
+    """)
+
+# ------------------------------ DOCTOR MODE ------------------------------
+elif page == "🧑‍⚕️ Doctor Mode":
+    st.title("🧑‍⚕️ Doctor Dashboard")
+    
+    st.markdown("#### Add New Patient")
+    patient_name = st.text_input("Patient Name")
+    patient_age = st.number_input("Age", min_value=0, max_value=120)
+    condition = st.text_area("Diagnosis / Notes")
+    if st.button("Save Patient"):
+        st.success(f"✅ Saved {patient_name}, Age: {patient_age}, Condition: {condition}")
+
+    st.markdown("---")
+    st.markdown("#### View Patients")
+    if "patients" not in st.session_state:
+        st.session_state.patients = []
+    
+    if st.session_state.patients:
+        for idx, p in enumerate(st.session_state.patients):
+            st.write(f"{idx+1}. **{p['name']}**, Age: {p['age']}, Diagnosis: {p['condition']}")
+    else:
+        st.info("No patients added yet.")
+
+# ------------------------------ PATIENT MODE ------------------------------
+elif page == "🧍 Patient Mode":
+    st.title("🧍 Patient Tools")
+    
+    st.markdown("### Symptom Checker")
+    symptom_input = st.text_area("Describe your symptoms:")
+    if st.button("Check Symptoms"):
+        if symptom_input.strip():
+            with st.spinner("Analyzing..."):
+                response = llm.invoke(f"Based on these symptoms, what could be the possible conditions? {symptom_input}")
+                st.markdown(f"🔍 Possible Conditions: \n\n{response}")
+        else:
+            st.warning("Please describe your symptoms first.")
+
+    st.markdown("---")
+    st.markdown("### Health Tips")
+    if st.button("Get Daily Tip"):
+        tip = llm.invoke("Give one general health tip for today.")
+        st.markdown(f"💡 Today's Tip: {tip}")
+
+# ------------------------------ AI CHATBOT ------------------------------
+elif page == "🤖 AI Chatbot":
+    st.title("🤖 Health AI Assistant")
+    st.markdown("Ask anything about health, wellness, biology, or medicine!")
+
+    # Display chat history
+    for role, content in st.session_state.messages:
         if role == "user":
             st.markdown(f'<div class="user-bubble"><b>You:</b> {content}</div>', unsafe_allow_html=True)
         else:
             st.markdown(f'<div class="bot-bubble"><b>Bot:</b> {content}</div>', unsafe_allow_html=True)
-    else:
-        if message.type == "human":
-            st.markdown(f'<div class="user-bubble"><b>You:</b> {message.content}</div>', unsafe_allow_html=True)
-        elif message.type == "ai":
-            st.markdown(f'<div class="bot-bubble"><b>Bot:</b> {message.content}</div>', unsafe_allow_html=True)
 
-# Chat input form
-with st.form(key='chat_form', clear_on_submit=True):
-    user_input = st.text_input("Your question:", placeholder="Type something like 'What are the symptoms of diabetes?'...")
-    submit_button = st.form_submit_button(label="Send")
+    # Input form
+    with st.form(key='chat_form', clear_on_submit=True):
+        user_input = st.text_input("Your question:", placeholder="Type something like 'What are the symptoms of diabetes?'...")
+        submit_button = st.form_submit_button(label="Send")
 
-# Handle submission
-if submit_button and user_input:
-    st.session_state.messages.append(("user", user_input))
-    with st.spinner("Thinking..."):
-        try:
-            response = llm.invoke(user_input)
-            st.session_state.messages.append(("assistant", response))
-            st.rerun()
-        except Exception as e:
-            st.session_state.messages.append(("assistant", f"Error: {str(e)}"))
-            st.rerun()
+    if submit_button and user_input:
+        st.session_state.messages.append(("user", user_input))
+        with st.spinner("Thinking..."):
+            try:
+                response = llm.invoke(user_input)
+                st.session_state.messages.append(("assistant", response))
+                st.rerun()
+            except Exception as e:
+                st.session_state.messages.append(("assistant", f"Error: {str(e)}"))
+                st.rerun()
