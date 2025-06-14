@@ -34,17 +34,6 @@ st.markdown("""
             border-radius: 8px;
             margin-bottom: 20px;
         }
-        .navbar button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 16px;
-            margin: 0 15px;
-            cursor: pointer;
-        }
-        .navbar button:hover {
-            text-decoration: underline;
-        }
         .card {
             background-color: #f9fcff;
             padding: 15px 20px;
@@ -89,24 +78,33 @@ if "users" not in st.session_state:
         "patient": {"password": "pat123", "role": "Patient"},
     }
 
-# Top Navigation Bar
+# Top Navigation Bar (Fully Functional with Buttons)
 def render_navbar():
-    tab = st.session_state.tab  # Get current tab from session state
+    st.markdown('<div class="navbar">', unsafe_allow_html=True)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
-    st.markdown("""
-    <div class="navbar">
-        <button onclick="location.href='?tab=Home'" type="button">🏠 Home</button>
-        <button onclick="location.href='?tab=Login'" type="button">🔐 Login</button>
-        <button onclick="location.href='?tab=Register'" type="button">📝 Register</button>
-        <button onclick="location.href='?tab=Dashboard'" type="button">📊 Dashboard</button>
-        <button onclick="location.href='?tab=Chatbot'" type="button">🤖 Chatbot</button>
-    </div>
-    """, unsafe_allow_html=True)
+    with col1:
+        if st.button("🏠 Home"):
+            st.session_state.tab = "Home"
+            st.rerun()
+    with col2:
+        if st.button("🔐 Login"):
+            st.session_state.tab = "Login"
+            st.rerun()
+    with col3:
+        if st.button("📝 Register"):
+            st.session_state.tab = "Register"
+            st.rerun()
+    with col4:
+        if st.button("📊 Dashboard"):
+            st.session_state.tab = "Dashboard"
+            st.rerun()
+    with col5:
+        if st.button("🤖 Chatbot"):
+            st.session_state.tab = "Chatbot"
+            st.rerun()
 
-    # Read query params using st.query_params
-    query_params = st.query_params
-    if "tab" in query_params:
-        st.session_state.tab = query_params.tab
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Load Watsonx credentials from secrets
 try:
@@ -148,7 +146,6 @@ def show_login():
             st.session_state.role = role
             st.success(f"Logged in as {role}")
             st.session_state.tab = "Dashboard"
-            st.query_params.tab = "Dashboard"  # Set query param
             st.rerun()
         else:
             st.error("Invalid credentials or role mismatch.")
@@ -172,7 +169,6 @@ def show_register():
             st.session_state.users[new_username] = {"password": new_password, "role": role}
             st.success("Registration successful! You can now log in.")
             st.session_state.tab = "Login"
-            st.query_params.tab = "Login"  # Set query param
             st.rerun()
 
 # ------------------------------ DASHBOARD ------------------------------
@@ -231,9 +227,9 @@ def show_home():
     <div class="card">
         <h4>🩺 Quick Links</h4>
         <ul>
-            <li><a href="?tab=Login">🔐 Log In</a></li>
-            <li><a href="?tab=Register">📝 Register</a></li>
-            <li><a href="?tab=Chatbot">🤖 Chat with AI Doctor</a></li>
+            <li><a href="#" onclick="location.href='?tab=Login'">🔐 Log In</a></li>
+            <li><a href="#" onclick="location.href='?tab=Register'">📝 Register</a></li>
+            <li><a href="#" onclick="location.href='?tab=Chatbot'">🤖 Chat with AI Doctor</a></li>
         </ul>
     </div>
     """, unsafe_allow_html=True)
