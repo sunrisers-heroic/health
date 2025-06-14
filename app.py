@@ -3,20 +3,20 @@ from langchain_ibm import WatsonxLLM
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
 
 # Page config
-st.set_page_config(page_title="🏥 MyHospital - Health AI", layout="centered", page_icon="🏥")
+st.set_page_config(page_title="🩺 Health Assistant", layout="centered", page_icon="🩺")
 
-# Custom CSS for hospital theme
+# Custom CSS - Classic Medical UI
 st.markdown("""
     <style>
         body {
-            background-color: #f0f6ff;
-            font-family: 'Segoe UI', sans-serif;
+            background-color: #f9fbfd;
+            font-family: Arial, sans-serif;
         }
         .main {
             background-color: #ffffff;
             padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
         .header {
             background: linear-gradient(to right, #007acc, #00aaff);
@@ -33,6 +33,14 @@ st.markdown("""
             padding: 10px 0;
             border-radius: 8px;
             margin-bottom: 20px;
+        }
+        .nav-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            margin: 0 15px;
+            cursor: pointer;
         }
         .card {
             background-color: #f9fcff;
@@ -62,13 +70,34 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Header
-st.markdown('<div class="header"><h1>🏥 MyHospital - Health AI Assistant</h1><p>Your virtual health companion</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="header"><h1>🩺 MyHospital - Health Assistant</h1><p>Your virtual health companion</p></div>', unsafe_allow_html=True)
+
+# Navigation Bar
+def render_navbar():
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        if st.button("🏠 Home", key="btn_home"):
+            st.session_state.page = "Home"
+    with col2:
+        if st.button("🔐 Login", key="btn_login"):
+            st.session_state.page = "Login"
+    with col3:
+        if st.button("📝 Register", key="btn_register"):
+            st.session_state.page = "Register"
+    with col4:
+        if st.button("🧑‍⚕️ Dashboard", key="btn_dashboard"):
+            st.session_state.page = "Dashboard"
+    with col5:
+        if st.button("🤖 Chatbot", key="btn_chatbot"):
+            st.session_state.page = "Chatbot"
+
+render_navbar()
 
 # Initialize session state
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
 if "role" not in st.session_state:
     st.session_state.role = None
-if "tab" not in st.session_state:
-    st.session_state.tab = "Home"
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "users" not in st.session_state:
@@ -77,34 +106,6 @@ if "users" not in st.session_state:
         "doctor": {"password": "doc123", "role": "Doctor"},
         "patient": {"password": "pat123", "role": "Patient"},
     }
-
-# Top Navigation Bar (Fully Functional with Buttons)
-def render_navbar():
-    st.markdown('<div class="navbar">', unsafe_allow_html=True)
-    col1, col2, col3, col4, col5 = st.columns(5)
-
-    with col1:
-        if st.button("🏠 Home"):
-            st.session_state.tab = "Home"
-            st.rerun()
-    with col2:
-        if st.button("🔐 Login"):
-            st.session_state.tab = "Login"
-            st.rerun()
-    with col3:
-        if st.button("📝 Register"):
-            st.session_state.tab = "Register"
-            st.rerun()
-    with col4:
-        if st.button("📊 Dashboard"):
-            st.session_state.tab = "Dashboard"
-            st.rerun()
-    with col5:
-        if st.button("🤖 Chatbot"):
-            st.session_state.tab = "Chatbot"
-            st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # Load Watsonx credentials from secrets
 try:
@@ -134,9 +135,25 @@ except Exception as e:
     st.error(f"🚨 Error initializing LLM: {str(e)}")
     st.stop()
 
+# ------------------------------ HOME PAGE ------------------------------
+def show_home():
+    st.markdown('<h2>Welcome to MyHospital</h2>', unsafe_allow_html=True)
+    st.markdown("""
+    <p style="font-size:16px;">We're here to help you stay healthy, informed, and empowered. Whether you're a doctor, patient, or admin, this assistant will guide you through health-related queries, symptom checks, and more.</p>
+    
+    <div class="card">
+        <h4>💡 About This Tool</h4>
+        <ul>
+            <li>AI-powered medical Q&A</li>
+            <li>Sign up & log in as Admin, Doctor, or Patient</li>
+            <li>Get instant health advice</li>
+        </ul>
+    </div>
+    """)
+
 # ------------------------------ LOGIN PAGE ------------------------------
 def show_login():
-    st.markdown('<h3 class="section-title">🔐 Login</h3>', unsafe_allow_html=True)
+    st.markdown('<h3>🔐 Login</h3>', unsafe_allow_html=True)
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     role = st.selectbox("Role", ["Admin", "Doctor", "Patient"])
@@ -145,14 +162,13 @@ def show_login():
         if username in st.session_state.users and st.session_state.users[username]["password"] == password and st.session_state.users[username]["role"] == role:
             st.session_state.role = role
             st.success(f"Logged in as {role}")
-            st.session_state.tab = "Dashboard"
-            st.rerun()
+            st.session_state.page = "Dashboard"
         else:
             st.error("Invalid credentials or role mismatch.")
 
 # ------------------------------ REGISTER PAGE ------------------------------
 def show_register():
-    st.markdown('<h3 class="section-title">📝 Sign Up</h3>', unsafe_allow_html=True)
+    st.markdown('<h3>📝 Sign Up</h3>', unsafe_allow_html=True)
     new_username = st.text_input("New Username")
     new_password = st.text_input("New Password", type="password")
     confirm_password = st.text_input("Confirm Password", type="password")
@@ -168,12 +184,11 @@ def show_register():
         else:
             st.session_state.users[new_username] = {"password": new_password, "role": role}
             st.success("Registration successful! You can now log in.")
-            st.session_state.tab = "Login"
-            st.rerun()
+            st.session_state.page = "Login"
 
 # ------------------------------ DASHBOARD ------------------------------
 def show_dashboard():
-    st.markdown(f'<h3 class="section-title">👋 Welcome, {st.session_state.role}!</h3>', unsafe_allow_html=True)
+    st.markdown(f'<h3>👋 Welcome, {st.session_state.role}!</h3>', unsafe_allow_html=True)
     st.markdown('<div class="card">', unsafe_allow_html=True)
     if st.session_state.role == "Admin":
         st.write("You're logged in as an **Admin**. Manage users, data, and settings here.")
@@ -185,7 +200,7 @@ def show_dashboard():
 
 # ------------------------------ CHATBOT ------------------------------
 def show_chatbot():
-    st.markdown('<h3 class="section-title">🤖 Health AI Assistant</h3>', unsafe_allow_html=True)
+    st.markdown('<h3>🤖 Health AI Assistant</h3>', unsafe_allow_html=True)
     st.markdown("Ask anything about health, wellness, biology, or medicine!")
 
     for role, content in st.session_state.messages:
@@ -204,55 +219,28 @@ def show_chatbot():
             try:
                 response = llm.invoke(user_input)
                 st.session_state.messages.append(("assistant", response))
-                st.rerun()
+                st.experimental_rerun()
             except Exception as e:
                 st.session_state.messages.append(("assistant", f"Error: {str(e)}"))
-                st.rerun()
-
-# ------------------------------ HOME PAGE ------------------------------
-def show_home():
-    st.markdown('<h2>Welcome to MyHospital</h2>', unsafe_allow_html=True)
-    st.markdown("""
-    <p style="font-size:18px;">We're here to help you stay healthy, informed, and empowered. Whether you're a doctor, patient, or admin, this assistant will guide you through health-related queries, symptom checks, and more.</p>
-    
-    <div class="card">
-        <h4>💡 About This Tool</h4>
-        <ul>
-            <li>AI-powered medical Q&A</li>
-            <li>Sign up & log in as Admin, Doctor, or Patient</li>
-            <li>Get instant health advice</li>
-        </ul>
-    </div>
-    
-    <div class="card">
-        <h4>🩺 Quick Links</h4>
-        <ul>
-            <li><a href="#" onclick="location.href='?tab=Login'">🔐 Log In</a></li>
-            <li><a href="#" onclick="location.href='?tab=Register'">📝 Register</a></li>
-            <li><a href="#" onclick="location.href='?tab=Chatbot'">🤖 Chat with AI Doctor</a></li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
+                st.experimental_rerun()
 
 # ------------------------------ MAIN APP LOGIC ------------------------------
-render_navbar()
-
-tab = st.session_state.tab
-if tab == "Home":
+page = st.session_state.page
+if page == "Home":
     show_home()
-elif tab == "Login":
+elif page == "Login":
     show_login()
-elif tab == "Register":
+elif page == "Register":
     show_register()
-elif tab == "Dashboard":
+elif page == "Dashboard":
     if st.session_state.role:
         show_dashboard()
     else:
         st.warning("🔒 Please log in first.")
-        show_login()
-elif tab == "Chatbot":
+        st.session_state.page = "Login"
+elif page == "Chatbot":
     if st.session_state.role:
         show_chatbot()
     else:
         st.warning("🔒 Please log in first.")
-        show_login()
+        st.session_state.page = "Login"
