@@ -71,10 +71,17 @@ if "tab" not in st.session_state:
     st.session_state.tab = "Home"
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "users" not in st.session_state:
+    st.session_state.users = {
+        # Predefined demo user
+        "admin": {"password": "admin123", "role": "Admin"},
+        "doctor": {"password": "doc123", "role": "Doctor"},
+        "patient": {"password": "pat123", "role": "Patient"},
+    }
 
 # Top Navigation Bar
 def render_navbar():
-    cols = st.columns([1,1,1,1])
+    cols = st.columns([1,1,1,1,1])
     with cols[0]:
         if st.button("🏠 Home"):
             st.session_state.tab = "Home"
@@ -82,9 +89,12 @@ def render_navbar():
         if st.button("🔐 Login"):
             st.session_state.tab = "Login"
     with cols[2]:
+        if st.button("📝 Register"):
+            st.session_state.tab = "Register"
+    with cols[3]:
         if st.button("📊 Dashboard"):
             st.session_state.tab = "Dashboard"
-    with cols[3]:
+    with cols[4]:
         if st.button("🤖 Chatbot"):
             st.session_state.tab = "Chatbot"
 
@@ -116,13 +126,6 @@ except Exception as e:
     st.error(f"🚨 Error initializing LLM: {str(e)}")
     st.stop()
 
-# Dummy users (for demo only — should be replaced with secure DB in production)
-users = {
-    "admin": {"password": "admin123", "role": "Admin"},
-    "doctor": {"password": "doc123", "role": "Doctor"},
-    "patient": {"password": "pat123", "role": "Patient"},
-}
-
 # ------------------------------ LOGIN PAGE ------------------------------
 def show_login():
     st.title("🔐 Login")
@@ -131,13 +134,34 @@ def show_login():
     role = st.selectbox("Role", ["Admin", "Doctor", "Patient"])
 
     if st.button("Login"):
-        if username in users and users[username]["password"] == password and users[username]["role"] == role:
+        if username in st.session_state.users and st.session_state.users[username]["password"] == password and st.session_state.users[username]["role"] == role:
             st.session_state.role = role
             st.success(f"Logged in as {role}")
             st.session_state.tab = "Dashboard"
             st.rerun()
         else:
             st.error("Invalid credentials or role mismatch.")
+
+# ------------------------------ REGISTER PAGE ------------------------------
+def show_register():
+    st.title("📝 Sign Up")
+    new_username = st.text_input("New Username")
+    new_password = st.text_input("New Password", type="password")
+    confirm_password = st.text_input("Confirm Password", type="password")
+    role = st.selectbox("Select Role", ["Admin", "Doctor", "Patient"])
+
+    if st.button("Register"):
+        if new_password != confirm_password:
+            st.error("Passwords do not match.")
+        elif not new_username or not new_password:
+            st.error("Please fill all fields.")
+        elif new_username in st.session_state.users:
+            st.warning("Username already taken.")
+        else:
+            st.session_state.users[new_username] = {"password": new_password, "role": role}
+            st.success("Registration successful! You can now log in.")
+            st.session_state.tab = "Login"
+            st.rerun()
 
 # ------------------------------ DASHBOARD ------------------------------
 def show_dashboard():
@@ -198,6 +222,8 @@ if st.session_state.tab == "Home":
     show_home()
 elif st.session_state.tab == "Login":
     show_login()
+elif st.session_state.tab == "Register":
+    show_register()
 elif st.session_state.tab == "Dashboard":
     if st.session_state.role:
         show_dashboard()
