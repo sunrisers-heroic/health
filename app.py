@@ -3,13 +3,13 @@ from langchain_ibm import WatsonxLLM
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
 
 # Page config
-st.set_page_config(page_title="🌿 Sustainability Smart City Assistant", layout="centered", page_icon="🌱")
+st.set_page_config(page_title="🩺 Health AI Assistant", layout="centered", page_icon="🩺")
 
-# Custom CSS for chat bubbles
+# Custom CSS for chat bubbles with a health-themed color palette
 st.markdown("""
     <style>
         body {
-            background-color: #f4f8fb;
+            background-color: #f9fcff;
             font-family: 'Segoe UI', sans-serif;
         }
         .main {
@@ -19,7 +19,7 @@ st.markdown("""
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .user-bubble {
-            background-color: #dcf8c6;
+            background-color: #d6eaff;
             padding: 10px;
             border-radius: 10px;
             margin: 5px 0;
@@ -28,7 +28,7 @@ st.markdown("""
             word-wrap: break-word;
         }
         .bot-bubble {
-            background-color: #ececec;
+            background-color: #f0f4f8;
             padding: 10px;
             border-radius: 10px;
             margin: 5px 0;
@@ -44,8 +44,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Title and description
-st.title("🌿 Sustainability Smart City Assistant")
-st.markdown("Ask anything about smart cities, sustainability, green tech, or urban planning!")
+st.title("🩺 Health AI Assistant")
+st.markdown("Ask anything about health, wellness, medical advice, or general biology!")
 
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -73,7 +73,7 @@ try:
         },
     )
 except KeyError:
-    st.warning("⚠️ Watsonx credentials missing. Please set them in Streamlit Cloud or `.streamlit/secrets.toml`.")
+    st.warning("⚠️ Watsonx credentials missing. Please set them in Streamlit Cloud or .streamlit/secrets.toml.")
     st.stop()
 except Exception as e:
     st.error(f"🚨 Error initializing LLM: {str(e)}")
@@ -95,7 +95,7 @@ for message in st.session_state.messages:
 
 # Chat input form
 with st.form(key='chat_form', clear_on_submit=True):
-    user_input = st.text_input("Your question:", placeholder="Type something like 'What makes a city sustainable?'...")
+    user_input = st.text_input("Your question:", placeholder="Type something like 'What are the symptoms of diabetes?'...")
     submit_button = st.form_submit_button(label="Send")
 
 # Handle submission
