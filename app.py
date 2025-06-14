@@ -2,52 +2,69 @@ import streamlit as st
 from langchain_ibm import WatsonxLLM
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
 import pandas as pd
-from datetime import datetime
 
 # Page config
 st.set_page_config(page_title="🩺 Health Assistant", layout="wide", page_icon="🩺")
 
-# Custom CSS for better UI
+# Custom CSS for green/blue hospital-themed UI
 st.markdown("""
     <style>
         body {
-            background-color: #f9fbfd;
+            background-color: #f0f8ff;
             font-family: Arial, sans-serif;
         }
         .main {
             background-color: #ffffff;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .navbar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 10px 0;
+            background: linear-gradient(to right, #007acc, #00aaff);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .nav-button {
+            background-color: #ffffff;
+            color: #007acc;
+            border: none;
+            padding: 10px 16px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .nav-button:hover {
+            background-color: #e0f0ff;
+        }
+        .section {
+            display: none;
+            padding: 20px;
+            background-color: #f9fcff;
+            border-left: 5px solid #007acc;
+            margin-top: 10px;
+            border-radius: 6px;
+        }
+        .active-section {
+            display: block;
         }
         .card {
-            background-color: #f9fcff;
-            padding: 15px 20px;
-            border-left: 5px solid #007acc;
+            background-color: #e6f7ff;
+            padding: 10px;
+            border-radius: 6px;
             margin: 10px 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .chat-bubble-user {
-            background-color: #d6eaff;
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 70%;
-            align-self: flex-end;
-            margin: 5px 0;
-        }
-        .chat-bubble-bot {
-            background-color: #e6f0ff;
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 70%;
-            align-self: flex-start;
-            margin: 5px 0;
         }
     </style>
 """, unsafe_allow_html=True)
 
 # Initialize session state
+if "current_section" not in st.session_state:
+    st.session_state.current_section = "home"
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "medications" not in st.session_state:
@@ -58,10 +75,6 @@ if "posts" not in st.session_state:
     st.session_state.posts = []
 if "symptoms_history" not in st.session_state:
     st.session_state.symptoms_history = []
-if "user_logged_in" not in st.session_state:
-    st.session_state.user_logged_in = False
-if "theme" not in st.session_state:
-    st.session_state.theme = "light"
 
 # Load Watsonx credentials from secrets
 try:
@@ -91,53 +104,57 @@ except Exception as e:
     st.error(f"🚨 Error initializing LLM: {str(e)}")
     st.stop()
 
-# ------------------------------ SIDEBAR NAVIGATION ------------------------------
-st.sidebar.title("🩺 Health Assistant")
-page = st.sidebar.radio("Go to", [
-    "🏠 Home",
-    "🔐 Login",
-    "🧾 User Profile & Dashboard",
-    "📊 Health Data Tracking",
-    "💊 Medication Tracker",
-    "📅 Appointment Scheduler",
-    "🧠 AI Symptom Checker",
-    "🧘 Mental Health Support",
-    "🏋️ Fitness Planner",
-    "📈 Progress Reports",
-    "🫀 Chronic Disease Management",
-    "👥 Community & Support",
-    "🌐 Settings & Preferences"
-])
+# Navigation bar with buttons
+st.markdown('<div class="navbar">', unsafe_allow_html=True)
+col1, col2, col3, col4, col5 = st.columns(5)
 
-# ------------------------------ LOGIN PAGE ------------------------------
-if page == "🔐 Login":
-    st.title("🔐 Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    if st.button("Login"):
-        st.session_state.user_logged_in = True
-        st.success("Logged in successfully!")
+with col1:
+    if st.button("🩺 Home", key="btn_home", use_container_width=True):
+        st.session_state.current_section = "home"
+with col2:
+    if st.button("🧾 Profile", key="btn_profile", use_container_width=True):
+        st.session_state.current_section = "profile"
+with col3:
+    if st.button("🧠 Symptom Checker", key="btn_symptoms", use_container_width=True):
+        st.session_state.current_section = "symptoms"
+with col4:
+    if st.button("📊 Reports", key="btn_reports", use_container_width=True):
+        st.session_state.current_section = "reports"
+with col5:
+    if st.button("⚙️ Settings", key="btn_settings", use_container_width=True):
+        st.session_state.current_section = "settings"
+st.markdown('</div>', unsafe_allow_html=True)
 
-# ------------------------------ HOME PAGE ------------------------------
-if page == "🏠 Home":
-    st.title("🩺 Welcome to Your Personalized Health Assistant")
+# ------------------------------ HEADER ------------------------------
+st.markdown('<h1 style="text-align:center; color:#007acc;">🩺 Health Assistant</h1>', unsafe_allow_html=True)
+st.markdown('<p style="text-align:center; font-size:16px;">A modern health tracking and wellness assistant.</p>', unsafe_allow_html=True)
+
+# ------------------------------ SECTIONS ------------------------------
+
+def show_section(name):
+    return st.session_state.current_section == name
+
+# --- HOME ---
+if show_section("home"):
+    st.markdown('<div class="active-section">', unsafe_allow_html=True)
+    st.markdown('<h2>Welcome to Your Health Assistant 🏥</h2>', unsafe_allow_html=True)
     st.markdown("""
-        This app helps you manage your health comprehensively — from symptom checks to fitness planning.
-        
-        Use the sidebar to navigate through different sections. Each module supports tracking, logging, and insights.
+    This application helps you manage your health comprehensively — from symptom checks to fitness planning.
+    
+    ### 🧠 Highlights:
+    - 💬 AI-Powered Symptom Checker  
+    - 📊 Real-Time Health Metrics  
+    - 🎯 Customizable Wellness Plans  
+    - 🔐 Secure, Private, and Simple  
 
-        ### 🧠 Highlights:
-        - 💬 AI-Powered Symptom Checker  
-        - 📊 Real-Time Health Metrics  
-        - 🎯 Customizable Wellness Plans  
-        - 🔐 Secure, Private, and Simple  
-
-        Get started by exploring any of the tools below!
+    Use the navigation above to explore!
     """)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# ------------------------------ USER PROFILE ------------------------------
-elif page == "🧾 User Profile & Dashboard":
-    st.title("🧾 User Profile & Dashboard")
+# --- PROFILE ---
+elif show_section("profile"):
+    st.markdown('<div class="active-section">', unsafe_allow_html=True)
+    st.markdown('<h2>🧾 User Profile & Dashboard</h2>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
         name = st.text_input("Full Name")
@@ -149,86 +166,16 @@ elif page == "🧾 User Profile & Dashboard":
         if height > 0:
             bmi = weight / ((height / 100) ** 2)
             st.write(f"**BMI:** {bmi:.1f}")
-    
     if st.button("Save Profile"):
-        st.session_state.profile = {
-            "name": name, "age": age, "gender": gender,
-            "height": height, "weight": weight
-        }
+        st.session_state.profile = {"name": name, "age": age, "gender": gender, "height": height, "weight": weight}
         st.success("Profile saved!")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# ------------------------------ HEALTH DATA TRACKING ------------------------------
-elif page == "📊 Health Data Tracking":
-    st.title("📊 Health Data Tracking")
-    steps = st.slider("Steps Taken", 0, 50000, step=100)
-    heart_rate = st.slider("Heart Rate (bpm)", 40, 200)
-    sleep_hours = st.slider("Hours Slept", 0, 12)
-    water = st.slider("Water Intake (L)", 0.0, 5.0, step=0.1)
-    
-    if st.button("Save Data"):
-        st.session_state.health_data = {
-            "steps": steps,
-            "heart_rate": heart_rate,
-            "sleep_hours": sleep_hours,
-            "water_intake": water
-        }
-        st.success("Data saved successfully.")
-
-# ------------------------------ MEDICATION TRACKER ------------------------------
-elif page == "💊 Medication Tracker":
-    st.title("💊 Medication Tracker")
-    med_name = st.text_input("Medication Name")
-    dosage = st.text_input("Dosage")
-    time = st.time_input("Time to Take")
-    note = st.text_area("Notes")
-    
-    if st.button("Add Medication"):
-        st.session_state.medications.append({
-            "name": med_name,
-            "dosage": dosage,
-            "time": str(time),
-            "note": note
-        })
-        st.success("Medication added!")
-    
-    st.subheader("Your Medications")
-    if st.session_state.medications:
-        for idx, med in enumerate(st.session_state.medications):
-            st.markdown(f"{idx+1}. **{med['name']}** - {med['dosage']} at {med['time']} ({med['note']})")
-    else:
-        st.info("No medications added yet.")
-
-# ------------------------------ APPOINTMENT SCHEDULER ------------------------------
-elif page == "📅 Appointment Scheduler":
-    st.title("📅 Appointment Scheduler")
-    date = st.date_input("Select Date")
-    doctor = st.text_input("Doctor/Service")
-    reason = st.text_area("Reason for Visit")
-    remind = st.checkbox("Set Reminder")
-    
-    if st.button("Book Appointment"):
-        st.session_state.appointments.append({
-            "date": str(date),
-            "doctor": doctor,
-            "reason": reason,
-            "reminder": remind
-        })
-        st.success(f"Appointment with {doctor} on {date} booked.")
-    
-    st.subheader("Upcoming Appointments")
-    if st.session_state.appointments:
-        for appt in st.session_state.appointments:
-            st.markdown(f"- **{appt['doctor']}** on {appt['date']} ({appt['reason']})")
-            if appt['reminder']:
-                st.caption("🔔 Reminder set.")
-    else:
-        st.info("No appointments scheduled.")
-
-# ------------------------------ AI SYMPTOM CHECKER ------------------------------
-elif page == "🧠 AI Symptom Checker":
-    st.title("🧠 AI Symptom Checker")
+# --- SYMPTOM CHECKER ---
+elif show_section("symptoms"):
+    st.markdown('<div class="active-section">', unsafe_allow_html=True)
+    st.markdown('<h2>🧠 AI Symptom Checker</h2>', unsafe_allow_html=True)
     symptoms = st.text_area("Describe your symptoms:")
-    
     if st.button("Check Symptoms"):
         with st.spinner("Analyzing..."):
             prompt = f"Based on these symptoms: '{symptoms}', what could be the possible conditions?"
@@ -243,87 +190,53 @@ elif page == "🧠 AI Symptom Checker":
     for item in st.session_state.symptoms_history:
         st.markdown(f"**Q:** {item['input']}\n\n**A:** {item['response']}")
         st.divider()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# ------------------------------ MENTAL HEALTH ------------------------------
-elif page == "🧘 Mental Health Support":
-    st.title("🧘 Mental Health Support")
-    mood = st.slider("Rate your mood today", 1, 10)
-    journal = st.text_area("Journal Entry")
-    if st.button("Save Mood & Journal"):
-        st.success("Saved!")
-    st.markdown("### Breathing Exercise")
-    if st.button("Start Exercise"):
-        st.info("Breathe in... Hold... Breathe out...")
+# --- REPORTS ---
+elif show_section("reports"):
+    st.markdown('<div class="active-section">', unsafe_allow_html=True)
+    st.markdown('<h2>📈 Progress Reports</h2>', unsafe_allow_html=True)
+    steps = st.slider("Steps Taken", 0, 50000, step=100)
+    heart_rate = st.slider("Heart Rate (bpm)", 40, 200)
+    sleep_hours = st.slider("Hours Slept", 0, 12)
+    water = st.slider("Water Intake (L)", 0.0, 5.0, step=0.1)
 
-# ------------------------------ FITNESS PLANNER ------------------------------
-elif page == "🏋️ Fitness Planner":
-    st.title("🏋️ Fitness Planner")
-    goal = st.selectbox("Goal", ["Weight Loss", "Muscle Gain", "Maintenance"])
-    days = st.multiselect("Days Available", ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
-    plan = st.text_area("Workout Plan")
-    if st.button("Save Plan"):
-        st.session_state.fitness_plan = {
-            "goal": goal,
-            "days": ", ".join(days),
-            "plan": plan
+    if st.button("Save Data"):
+        st.session_state.health_data = {
+            "steps": steps,
+            "heart_rate": heart_rate,
+            "sleep_hours": sleep_hours,
+            "water_intake": water
         }
-        st.success("Plan saved!")
-    
-    if "fitness_plan" in st.session_state:
-        st.markdown("### Current Plan")
-        st.write(st.session_state.fitness_plan)
+        st.success("Data saved successfully.")
 
-# ------------------------------ PROGRESS REPORTS ------------------------------
-elif page == "📈 Progress Reports":
-    st.title("📈 Progress Reports")
     st.markdown("### Weekly Summary")
     st.line_chart([10, 20, 30, 25, 40])
     st.bar_chart({"Week 1": [20], "Week 2": [25], "Week 3": [30]})
     if st.button("Export Report"):
-        df = pd.DataFrame([st.session_state.health_data])  # Wrap dict in list for DataFrame
-        st.download_button("Download as CSV", data=df.to_csv(index=False), file_name="health_report.csv")
+        df = pd.DataFrame([st.session_state.health_data])
+        st.download_button("Download CSV", data=df.to_csv(index=False), file_name="health_report.csv")
         st.success("Report exported as CSV!")
 
-# ------------------------------ CHRONIC DISEASE MANAGEMENT ------------------------------
-elif page == "🫀 Chronic Disease Management":
-    st.title("🫀 Chronic Disease Management")
-    condition = st.selectbox("Condition", ["Diabetes", "Hypertension", "Asthma"])
-    if condition == "Diabetes":
-        glucose = st.number_input("Blood Glucose Level (mg/dL)")
-        if st.button("Log Glucose"):
-            st.success(f"Logged: {glucose} mg/dL")
-    elif condition == "Hypertension":
-        bp = st.text_input("Blood Pressure (e.g., 120/80)")
-        if st.button("Log BP"):
-            st.success(f"Logged: {bp}")
-    elif condition == "Asthma":
-        triggers = st.text_area("Triggers Today")
-        if st.button("Log Asthma"):
-            st.success("Logged successfully.")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# ------------------------------ COMMUNITY & SUPPORT ------------------------------
-elif page == "👥 Community & Support":
-    st.title("👥 Community & Support")
-    post = st.text_input("Write a post...")
-    if st.button("Post"):
-        st.session_state.posts.append(post)
-    st.markdown("### Recent Posts")
-    for p in st.session_state.posts:
-        st.markdown(f"- {p}")
-
-# ------------------------------ SETTINGS ------------------------------
-elif page == "🌐 Settings & Preferences":
-    st.title("🌐 Settings & Preferences")
+# --- SETTINGS ---
+elif show_section("settings"):
+    st.markdown('<div class="active-section">', unsafe_allow_html=True)
+    st.markdown('<h2>⚙️ Settings & Preferences</h2>', unsafe_allow_html=True)
     language = st.selectbox("Language", ["English", "Spanish", "French", "German"])
     theme = st.selectbox("Theme", ["Light", "Dark"])
     font_size = st.slider("Font Size", 12, 24)
     if st.button("Save Preferences"):
         st.success("Preferences updated!")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# ------------------------------ FOOTER ------------------------------
+# Default fallback
+else:
+    st.markdown('<div class="active-section">', unsafe_allow_html=True)
+    st.info("Select a feature from the navigation above.")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# Footer
 st.markdown("---")
 st.markdown("© 2025 MyHospital Health Assistant | Built with ❤️ using Streamlit & Watsonx")
-
-# ------------------------------ DEBUG MODE (Optional) ------------------------------
-with st.expander("🔧 Debug Mode"):
-    st.write("Session State:", st.session_state)
