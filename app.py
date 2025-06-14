@@ -7,7 +7,7 @@ from datetime import datetime
 # Page config
 st.set_page_config(page_title="🩺 Health Assistant", layout="wide", page_icon="🩺")
 
-# Custom CSS for green-themed UI
+# Custom CSS for animated UI and green/blue theme
 st.markdown("""
     <style>
         body {
@@ -19,6 +19,7 @@ st.markdown("""
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease-in-out;
         }
         .card {
             background-color: #ffffff;
@@ -27,30 +28,14 @@ st.markdown("""
             margin: 10px 0;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            animation: fadeIn 0.5s ease-in-out;
         }
-        .tab-button {
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            font-size: 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(10px);}
+            to {opacity: 1; transform: translateY(0);}
         }
-        .tab-button:hover {
-            background-color: #27ae60;
-        }
-        .section {
-            display: none;
-            padding: 20px;
-            background-color: #f9fcff;
-            border-left: 5px solid #2ecc71;
-            margin-top: 10px;
-            border-radius: 6px;
-        }
-        .active-section {
-            display: block;
+        .section-title {
+            color: #2ecc71;
         }
         .chat-bubble-user {
             background-color: #d6eaff;
@@ -67,6 +52,37 @@ st.markdown("""
             max-width: 70%;
             align-self: flex-start;
             margin: 5px 0;
+        }
+        .navbar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 10px 0;
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .nav-button {
+            background-color: #ffffff;
+            color: #2ecc71;
+            border: none;
+            padding: 10px 16px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .nav-button:hover {
+            background-color: #eafaf1;
+        }
+        .fade-enter {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .fade-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.3s ease;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -114,7 +130,7 @@ except Exception as e:
     st.error(f"🚨 Error initializing LLM: {str(e)}")
     st.stop()
 
-# Navigation bar with buttons
+# Top Navigation Buttons
 st.markdown('<div class="navbar">', unsafe_allow_html=True)
 col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
@@ -131,56 +147,58 @@ with col4:
     if st.button("🧠 Symptoms", key="btn_symptoms", use_container_width=True):
         st.session_state.current_section = "symptoms"
 with col5:
-    if st.button("📈 Reports", key="btn_reports", use_container_width=True):
-        st.session_state.current_section = "reports"
+    if st.button("🤖 Chat", key="btn_chat", use_container_width=True):
+        st.session_state.current_section = "chat"
 with col6:
     if st.button("🫀 Diseases", key="btn_diseases", use_container_width=True):
         st.session_state.current_section = "diseases"
 with col7:
     if st.button("⚙️ Settings", key="btn_settings", use_container_width=True):
         st.session_state.current_section = "settings"
-
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Header
 st.markdown('<h1 style="text-align:center; color:#2ecc71;">🩺 Health Assistant</h1>', unsafe_allow_html=True)
 st.markdown('<p style="text-align:center; font-size:16px;">A modern health tracking and wellness assistant.</p>', unsafe_allow_html=True)
 
-# Function to show/hide sections
-def show_section(name):
-    return st.session_state.current_section == name
+# Function to show/hide sections with animation
+def render_section(title, content):
+    st.markdown(f'<div class="card fade-enter-active">{title}</div>', unsafe_allow_html=True)
+    st.markdown(content, unsafe_allow_html=True)
 
 # ------------------------------ HOME PAGE ------------------------------
-if show_section("home"):
-    st.markdown('<div class="active-section">', unsafe_allow_html=True)
-    st.markdown('<h2>Welcome to Your Health Assistant 🏥</h2>', unsafe_allow_html=True)
-    st.markdown("""
-    This application helps you manage your health comprehensively — from symptom checks to fitness planning.
-    
-    ### 🧠 Highlights:
-    - 💬 AI-Powered Symptom Checker  
-    - 📊 Real-Time Health Metrics  
-    - 🎯 Customizable Wellness Plans  
-    - 🔐 Secure, Private, and Simple  
+if st.session_state.current_section == "home":
+    render_section(
+        "<h2>🩺 Welcome to Your Personalized Health Assistant</h2>",
+        """
+        This application helps you manage your health comprehensively — from symptom checks to fitness planning.
+        
+        ### 🧠 Highlights:
+        - 💬 AI-Powered Symptom Checker  
+        - 📊 Real-Time Health Metrics  
+        - 🎯 Customizable Wellness Plans  
+        - 🤖 AI Chatbot for advice  
+        - 📈 Weekly Reports powered by AI  
 
-    Use the navigation above to explore!
-    """)
-    st.markdown('</div>', unsafe_allow_html=True)
+        Get started by exploring any of the tools above!
+        """
+    )
 
 # ------------------------------ LOGIN PAGE ------------------------------
-elif show_section("login"):
-    st.markdown('<div class="active-section">', unsafe_allow_html=True)
-    st.markdown('<h2>🔐 Login</h2>', unsafe_allow_html=True)
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    if st.button("Login"):
-        st.session_state.user_logged_in = True
-        st.success("Logged in successfully!")
-    st.markdown('</div>', unsafe_allow_html=True)
+elif st.session_state.current_section == "login":
+    render_section("<h2>🔐 Login</h2>", """
+        <form>
+            <label>Username:</label><br>
+            <input type="text" placeholder="Enter username"><br><br>
+            <label>Password:</label><br>
+            <input type="password" placeholder="Enter password"><br><br>
+            <button>Login</button>
+        </form>
+    """)
 
 # ------------------------------ USER PROFILE ------------------------------
-elif show_section("profile"):
-    st.markdown('<div class="active-section">', unsafe_allow_html=True)
+elif st.session_state.current_section == "profile":
+    st.markdown('<div class="card fade-enter-active">', unsafe_allow_html=True)
     st.markdown('<h2>🧾 User Profile & Dashboard</h2>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
@@ -199,18 +217,15 @@ elif show_section("profile"):
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ------------------------------ SYMPTOM CHECKER ------------------------------
-elif show_section("symptoms"):
-    st.markdown('<div class="active-section">', unsafe_allow_html=True)
+elif st.session_state.current_section == "symptoms":
+    st.markdown('<div class="card fade-enter-active">', unsafe_allow_html=True)
     st.markdown('<h2>🧠 AI Symptom Checker</h2>', unsafe_allow_html=True)
     symptoms = st.text_area("Describe your symptoms:")
     if st.button("Check Symptoms"):
         with st.spinner("Analyzing..."):
             prompt = f"Based on these symptoms: '{symptoms}', what could be the possible conditions?"
             response = llm.invoke(prompt)
-            st.session_state.symptoms_history.append({
-                "input": symptoms,
-                "response": response
-            })
+            st.session_state.symptoms_history.append({"input": symptoms, "response": response})
             st.markdown(f"🔍 **Possible Conditions:**\n\n{response}")
 
     st.markdown("### 📜 Symptom History")
@@ -219,9 +234,31 @@ elif show_section("symptoms"):
         st.divider()
     st.markdown('</div>', unsafe_allow_html=True)
 
+# ------------------------------ CHATBOT (NEW FEATURE) ------------------------------
+elif st.session_state.current_section == "chat":
+    st.markdown('<div class="card fade-enter-active">', unsafe_allow_html=True)
+    st.markdown('<h2>🤖 AI Chatbot</h2>', unsafe_allow_html=True)
+
+    user_input = st.text_input("Ask anything about health...")
+    if st.button("Send") and user_input:
+        st.session_state.messages.append(("user", user_input))
+        with st.spinner("Thinking..."):
+            try:
+                ai_response = llm.invoke(user_input)
+                st.session_state.messages.append(("assistant", ai_response))
+            except Exception as e:
+                st.session_state.messages.append(("assistant", f"Error: {str(e)}"))
+
+    # Display chat history
+    for role, msg in st.session_state.messages:
+        bubble_class = "chat-bubble-user" if role == "user" else "chat-bubble-bot"
+        st.markdown(f'<div class="{bubble_class}"><b>{role}:</b> {msg}</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # ------------------------------ PROGRESS REPORTS ------------------------------
-elif show_section("reports"):
-    st.markdown('<div class="active-section">', unsafe_allow_html=True)
+elif st.session_state.current_section == "reports":
+    st.markdown('<div class="card fade-enter-active">', unsafe_allow_html=True)
     st.markdown('<h2>📈 Progress Reports</h2>', unsafe_allow_html=True)
     steps = st.slider("Steps Taken", 0, 50000, step=100)
     heart_rate = st.slider("Heart Rate (bpm)", 40, 200)
@@ -240,46 +277,52 @@ elif show_section("reports"):
     st.markdown("### Weekly Summary")
     st.line_chart([10, 20, 30, 25, 40])
     st.bar_chart({"Week 1": [20], "Week 2": [25], "Week 3": [30]})
-    if st.button("Export Report"):
-        df = pd.DataFrame([st.session_state.health_data])
-        st.download_button("Download CSV", data=df.to_csv(index=False), file_name="health_report.csv")
-        st.success("Report exported as CSV!")
+
+    if st.button("Generate AI Report Summary"):
+        data_summary = f"Steps: {steps}, HR: {heart_rate}, Sleep: {sleep_hours}, Water: {water}"
+        summary = llm.invoke(f"Give a short health report based on this data: {data_summary}")
+        st.markdown(f"📊 **AI Analysis:**\n\n{summary}")
+
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ------------------------------ CHRONIC DISEASE MANAGEMENT ------------------------------
-elif show_section("diseases"):
-    st.markdown('<div class="active-section">', unsafe_allow_html=True)
+elif st.session_state.current_section == "diseases":
+    st.markdown('<div class="card fade-enter-active">', unsafe_allow_html=True)
     st.markdown('<h2>🫀 Chronic Disease Logs</h2>', unsafe_allow_html=True)
     condition = st.selectbox("Condition", ["Diabetes", "Hypertension", "Asthma"])
+
     if condition == "Diabetes":
         glucose = st.number_input("Blood Glucose Level (mg/dL)")
         if st.button("Log Glucose"):
             st.success(f"Logged: {glucose} mg/dL")
+            advice = llm.invoke(f"My blood sugar is {glucose}. Is it normal?")
+            st.markdown(f"🤖 **AI Advice:** {advice}")
+
     elif condition == "Hypertension":
         bp = st.text_input("Blood Pressure (e.g., 120/80)")
         if st.button("Log BP"):
             st.success(f"Logged: {bp}")
+            advice = llm.invoke(f"My blood pressure is {bp}. What does that mean?")
+            st.markdown(f"🤖 **AI Advice:** {advice}")
+
     elif condition == "Asthma":
         triggers = st.text_area("Triggers Today")
         if st.button("Log Asthma"):
             st.success("Logged successfully.")
+            advice = llm.invoke(f"What are some ways to avoid asthma triggers like {triggers}?")
+            st.markdown(f"🤖 **AI Advice:** {advice}")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ------------------------------ SETTINGS ------------------------------
-elif show_section("settings"):
-    st.markdown('<div class="active-section">', unsafe_allow_html=True)
+elif st.session_state.current_section == "settings":
+    st.markdown('<div class="card fade-enter-active">', unsafe_allow_html=True)
     st.markdown('<h2>⚙️ Settings & Preferences</h2>', unsafe_allow_html=True)
     language = st.selectbox("Language", ["English", "Spanish", "French", "German"])
     theme = st.selectbox("Theme", ["Light", "Dark"])
     font_size = st.slider("Font Size", 12, 24)
     if st.button("Save Preferences"):
         st.success("Preferences updated!")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# Default fallback
-else:
-    st.markdown('<div class="active-section">', unsafe_allow_html=True)
-    st.info("Select a feature from the navigation above.")
+        st.markdown(f"🤖 **AI Tip:** A good font size for readability is usually between 14-16px.")
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Footer
