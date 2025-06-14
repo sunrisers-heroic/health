@@ -45,16 +45,48 @@ st.markdown("""
             font-size: 1.2em;
             margin-top: 1em;
         }
+        .navbar {
+            display: flex;
+            justify-content: space-around;
+            background-color: #007acc;
+            padding: 10px 0;
+        }
+        .navbar button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .navbar button:hover {
+            text-decoration: underline;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# Sidebar Navigation
-st.sidebar.title("🩺 Menu")
-page = st.sidebar.radio("Go to", ["🏠 Home", "🧑‍⚕️ Doctor Mode", "🧍 Patient Mode", "🤖 AI Chatbot"])
-
 # Initialize session state
+if "role" not in st.session_state:
+    st.session_state.role = None
+if "tab" not in st.session_state:
+    st.session_state.tab = "Home"
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+# Top Navigation Bar
+def render_navbar():
+    cols = st.columns([1,1,1,1])
+    with cols[0]:
+        if st.button("🏠 Home"):
+            st.session_state.tab = "Home"
+    with cols[1]:
+        if st.button("🔐 Login"):
+            st.session_state.tab = "Login"
+    with cols[2]:
+        if st.button("📊 Dashboard"):
+            st.session_state.tab = "Dashboard"
+    with cols[3]:
+        if st.button("🤖 Chatbot"):
+            st.session_state.tab = "Chatbot"
 
 # Load Watsonx credentials from secrets
 try:
@@ -84,64 +116,41 @@ except Exception as e:
     st.error(f"🚨 Error initializing LLM: {str(e)}")
     st.stop()
 
-# ------------------------------ HOME PAGE ------------------------------
-if page == "🏠 Home":
-    st.title("Welcome to 🩺 Health AI Assistant")
-    st.markdown("""
-        This application offers a wide range of healthcare tools including:
-        
-        - 🔍 AI-powered medical Q&A  
-        - 👨‍⚕️ Doctor mode for managing patients  
-        - 🧍 Self-assessment for patients  
-        - 💡 General health advice  
+# Dummy users (for demo only — should be replaced with secure DB in production)
+users = {
+    "admin": {"password": "admin123", "role": "Admin"},
+    "doctor": {"password": "doc123", "role": "Doctor"},
+    "patient": {"password": "pat123", "role": "Patient"},
+}
 
-        Choose an option from the sidebar to begin!
-    """)
+# ------------------------------ LOGIN PAGE ------------------------------
+def show_login():
+    st.title("🔐 Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    role = st.selectbox("Role", ["Admin", "Doctor", "Patient"])
 
-# ------------------------------ DOCTOR MODE ------------------------------
-elif page == "🧑‍⚕️ Doctor Mode":
-    st.title("🧑‍⚕️ Doctor Dashboard")
-    
-    st.markdown("#### Add New Patient")
-    patient_name = st.text_input("Patient Name")
-    patient_age = st.number_input("Age", min_value=0, max_value=120)
-    condition = st.text_area("Diagnosis / Notes")
-    if st.button("Save Patient"):
-        st.success(f"✅ Saved {patient_name}, Age: {patient_age}, Condition: {condition}")
-
-    st.markdown("---")
-    st.markdown("#### View Patients")
-    if "patients" not in st.session_state:
-        st.session_state.patients = []
-    
-    if st.session_state.patients:
-        for idx, p in enumerate(st.session_state.patients):
-            st.write(f"{idx+1}. **{p['name']}**, Age: {p['age']}, Diagnosis: {p['condition']}")
-    else:
-        st.info("No patients added yet.")
-
-# ------------------------------ PATIENT MODE ------------------------------
-elif page == "🧍 Patient Mode":
-    st.title("🧍 Patient Tools")
-    
-    st.markdown("### Symptom Checker")
-    symptom_input = st.text_area("Describe your symptoms:")
-    if st.button("Check Symptoms"):
-        if symptom_input.strip():
-            with st.spinner("Analyzing..."):
-                response = llm.invoke(f"Based on these symptoms, what could be the possible conditions? {symptom_input}")
-                st.markdown(f"🔍 Possible Conditions: \n\n{response}")
+    if st.button("Login"):
+        if username in users and users[username]["password"] == password and users[username]["role"] == role:
+            st.session_state.role = role
+            st.success(f"Logged in as {role}")
+            st.session_state.tab = "Dashboard"
+            st.rerun()
         else:
-            st.warning("Please describe your symptoms first.")
+            st.error("Invalid credentials or role mismatch.")
 
-    st.markdown("---")
-    st.markdown("### Health Tips")
-    if st.button("Get Daily Tip"):
-        tip = llm.invoke("Give one general health tip for today.")
-        st.markdown(f"💡 Today's Tip: {tip}")
+# ------------------------------ DASHBOARD ------------------------------
+def show_dashboard():
+    st.title(f"👋 Welcome, {st.session_state.role}!")
+    if st.session_state.role == "Admin":
+        st.write("You're logged in as an **Admin**. Manage users, data, and settings here.")
+    elif st.session_state.role == "Doctor":
+        st.write("You're logged in as a **Doctor**. View patient records and provide advice.")
+    elif st.session_state.role == "Patient":
+        st.write("You're logged in as a **Patient**. Use tools to check symptoms or get health tips.")
 
-# ------------------------------ AI CHATBOT ------------------------------
-elif page == "🤖 AI Chatbot":
+# ------------------------------ CHATBOT ------------------------------
+def show_chatbot():
     st.title("🤖 Health AI Assistant")
     st.markdown("Ask anything about health, wellness, biology, or medicine!")
 
@@ -167,3 +176,37 @@ elif page == "🤖 AI Chatbot":
             except Exception as e:
                 st.session_state.messages.append(("assistant", f"Error: {str(e)}"))
                 st.rerun()
+
+# ------------------------------ HOME PAGE ------------------------------
+def show_home():
+    st.title("Welcome to 🩺 Health AI Assistant")
+    st.markdown("""
+        This application offers a wide range of healthcare tools including:
+        
+        - 🔍 AI-powered medical Q&A  
+        - 👨‍⚕️ Doctor mode for managing patients  
+        - 🧍 Self-assessment for patients  
+        - 💡 General health advice  
+
+        Choose an option from the top menu to begin!
+    """)
+
+# ------------------------------ MAIN APP LOGIC ------------------------------
+render_navbar()
+
+if st.session_state.tab == "Home":
+    show_home()
+elif st.session_state.tab == "Login":
+    show_login()
+elif st.session_state.tab == "Dashboard":
+    if st.session_state.role:
+        show_dashboard()
+    else:
+        st.warning("🔒 Please log in first.")
+        show_login()
+elif st.session_state.tab == "Chatbot":
+    if st.session_state.role:
+        show_chatbot()
+    else:
+        st.warning("🔒 Please log in first.")
+        show_login()
