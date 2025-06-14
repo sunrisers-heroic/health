@@ -91,6 +91,8 @@ if "users" not in st.session_state:
 
 # Top Navigation Bar
 def render_navbar():
+    tab = st.session_state.tab  # Get current tab from session state
+
     st.markdown("""
     <div class="navbar">
         <button onclick="location.href='?tab=Home'" type="button">🏠 Home</button>
@@ -101,10 +103,10 @@ def render_navbar():
     </div>
     """, unsafe_allow_html=True)
 
-    # Handle URL query param (Streamlit doesn't support JS redirects directly)
-    query_params = st.experimental_get_query_params()
+    # Read query params using st.query_params
+    query_params = st.query_params
     if "tab" in query_params:
-        st.session_state.tab = query_params["tab"][0]
+        st.session_state.tab = query_params.tab
 
 # Load Watsonx credentials from secrets
 try:
@@ -146,7 +148,7 @@ def show_login():
             st.session_state.role = role
             st.success(f"Logged in as {role}")
             st.session_state.tab = "Dashboard"
-            st.experimental_set_query_params(tab="Dashboard")
+            st.query_params.tab = "Dashboard"  # Set query param
             st.rerun()
         else:
             st.error("Invalid credentials or role mismatch.")
@@ -170,7 +172,7 @@ def show_register():
             st.session_state.users[new_username] = {"password": new_password, "role": role}
             st.success("Registration successful! You can now log in.")
             st.session_state.tab = "Login"
-            st.experimental_set_query_params(tab="Login")
+            st.query_params.tab = "Login"  # Set query param
             st.rerun()
 
 # ------------------------------ DASHBOARD ------------------------------
@@ -239,19 +241,20 @@ def show_home():
 # ------------------------------ MAIN APP LOGIC ------------------------------
 render_navbar()
 
-if st.session_state.tab == "Home":
+tab = st.session_state.tab
+if tab == "Home":
     show_home()
-elif st.session_state.tab == "Login":
+elif tab == "Login":
     show_login()
-elif st.session_state.tab == "Register":
+elif tab == "Register":
     show_register()
-elif st.session_state.tab == "Dashboard":
+elif tab == "Dashboard":
     if st.session_state.role:
         show_dashboard()
     else:
         st.warning("🔒 Please log in first.")
         show_login()
-elif st.session_state.tab == "Chatbot":
+elif tab == "Chatbot":
     if st.session_state.role:
         show_chatbot()
     else:
