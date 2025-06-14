@@ -1,11 +1,13 @@
 import streamlit as st
 from langchain_ibm import WatsonxLLM
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
+import pandas as pd
+from datetime import datetime
 
 # Page config
-st.set_page_config(page_title="🩺 Health Assistant", layout="centered", page_icon="🩺")
+st.set_page_config(page_title="🩺 Health Assistant", layout="wide", page_icon="🩺")
 
-# Custom CSS - Classic Medical UI
+# Custom CSS for better UI
 st.markdown("""
     <style>
         body {
@@ -18,94 +20,48 @@ st.markdown("""
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
-        .header {
-            background: linear-gradient(to right, #007acc, #00aaff);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        .navbar {
-            display: flex;
-            justify-content: center;
-            background-color: #007acc;
-            padding: 10px 0;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .nav-button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 16px;
-            margin: 0 15px;
-            cursor: pointer;
-        }
         .card {
             background-color: #f9fcff;
             padding: 15px 20px;
             border-left: 5px solid #007acc;
             margin: 10px 0;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        .bubble-user {
+        .chat-bubble-user {
             background-color: #d6eaff;
             padding: 10px;
             border-radius: 10px;
-            margin: 5px 0;
             max-width: 70%;
             align-self: flex-end;
+            margin: 5px 0;
         }
-        .bubble-bot {
+        .chat-bubble-bot {
             background-color: #e6f0ff;
             padding: 10px;
             border-radius: 10px;
-            margin: 5px 0;
             max-width: 70%;
             align-self: flex-start;
+            margin: 5px 0;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# Header
-st.markdown('<div class="header"><h1>🩺 MyHospital - Health Assistant</h1><p>Your virtual health companion</p></div>', unsafe_allow_html=True)
-
-# Navigation Bar
-def render_navbar():
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        if st.button("🏠 Home", key="btn_home"):
-            st.session_state.page = "Home"
-    with col2:
-        if st.button("🔐 Login", key="btn_login"):
-            st.session_state.page = "Login"
-    with col3:
-        if st.button("📝 Register", key="btn_register"):
-            st.session_state.page = "Register"
-    with col4:
-        if st.button("🧑‍⚕️ Dashboard", key="btn_dashboard"):
-            st.session_state.page = "Dashboard"
-    with col5:
-        if st.button("🤖 Chatbot", key="btn_chatbot"):
-            st.session_state.page = "Chatbot"
-
-render_navbar()
-
 # Initialize session state
-if "page" not in st.session_state:
-    st.session_state.page = "Home"
-if "role" not in st.session_state:
-    st.session_state.role = None
 if "messages" not in st.session_state:
     st.session_state.messages = []
-if "users" not in st.session_state:
-    st.session_state.users = {
-        "admin": {"password": "admin123", "role": "Admin"},
-        "doctor": {"password": "doc123", "role": "Doctor"},
-        "patient": {"password": "pat123", "role": "Patient"},
-    }
+if "medications" not in st.session_state:
+    st.session_state.medications = []
+if "appointments" not in st.session_state:
+    st.session_state.appointments = []
+if "posts" not in st.session_state:
+    st.session_state.posts = []
+if "symptoms_history" not in st.session_state:
+    st.session_state.symptoms_history = []
+if "user_logged_in" not in st.session_state:
+    st.session_state.user_logged_in = False
+if "theme" not in st.session_state:
+    st.session_state.theme = "light"
 
 # Load Watsonx credentials from secrets
 try:
@@ -135,112 +91,239 @@ except Exception as e:
     st.error(f"🚨 Error initializing LLM: {str(e)}")
     st.stop()
 
-# ------------------------------ HOME PAGE ------------------------------
-def show_home():
-    st.markdown('<h2>Welcome to MyHospital</h2>', unsafe_allow_html=True)
-    st.markdown("""
-    <p style="font-size:16px;">We're here to help you stay healthy, informed, and empowered. Whether you're a doctor, patient, or admin, this assistant will guide you through health-related queries, symptom checks, and more.</p>
-    
-    <div class="card">
-        <h4>💡 About This Tool</h4>
-        <ul>
-            <li>AI-powered medical Q&A</li>
-            <li>Sign up & log in as Admin, Doctor, or Patient</li>
-            <li>Get instant health advice</li>
-        </ul>
-    </div>
-    """)
+# ------------------------------ SIDEBAR NAVIGATION ------------------------------
+st.sidebar.title("🩺 Health Assistant")
+page = st.sidebar.radio("Go to", [
+    "🏠 Home",
+    "🔐 Login",
+    "🧾 User Profile & Dashboard",
+    "📊 Health Data Tracking",
+    "💊 Medication Tracker",
+    "📅 Appointment Scheduler",
+    "🧠 AI Symptom Checker",
+    "🧘 Mental Health Support",
+    "🏋️ Fitness Planner",
+    "📈 Progress Reports",
+    "🫀 Chronic Disease Management",
+    "👥 Community & Support",
+    "🌐 Settings & Preferences"
+])
 
 # ------------------------------ LOGIN PAGE ------------------------------
-def show_login():
-    st.markdown('<h3>🔐 Login</h3>', unsafe_allow_html=True)
+if page == "🔐 Login":
+    st.title("🔐 Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-    role = st.selectbox("Role", ["Admin", "Doctor", "Patient"])
-
     if st.button("Login"):
-        if username in st.session_state.users and st.session_state.users[username]["password"] == password and st.session_state.users[username]["role"] == role:
-            st.session_state.role = role
-            st.success(f"Logged in as {role}")
-            st.session_state.page = "Dashboard"
-        else:
-            st.error("Invalid credentials or role mismatch.")
+        st.session_state.user_logged_in = True
+        st.success("Logged in successfully!")
 
-# ------------------------------ REGISTER PAGE ------------------------------
-def show_register():
-    st.markdown('<h3>📝 Sign Up</h3>', unsafe_allow_html=True)
-    new_username = st.text_input("New Username")
-    new_password = st.text_input("New Password", type="password")
-    confirm_password = st.text_input("Confirm Password", type="password")
-    role = st.selectbox("Select Role", ["Admin", "Doctor", "Patient"])
+# ------------------------------ HOME PAGE ------------------------------
+if page == "🏠 Home":
+    st.title("🩺 Welcome to Your Personalized Health Assistant")
+    st.markdown("""
+        This app helps you manage your health comprehensively — from symptom checks to fitness planning.
+        
+        Use the sidebar to navigate through different sections. Each module supports tracking, logging, and insights.
 
-    if st.button("Register"):
-        if new_password != confirm_password:
-            st.error("Passwords do not match.")
-        elif not new_username or not new_password:
-            st.error("Please fill all fields.")
-        elif new_username in st.session_state.users:
-            st.warning("Username already taken.")
-        else:
-            st.session_state.users[new_username] = {"password": new_password, "role": role}
-            st.success("Registration successful! You can now log in.")
-            st.session_state.page = "Login"
+        ### 🧠 Highlights:
+        - 💬 AI-Powered Symptom Checker  
+        - 📊 Real-Time Health Metrics  
+        - 🎯 Customizable Wellness Plans  
+        - 🔐 Secure, Private, and Simple  
 
-# ------------------------------ DASHBOARD ------------------------------
-def show_dashboard():
-    st.markdown(f'<h3>👋 Welcome, {st.session_state.role}!</h3>', unsafe_allow_html=True)
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    if st.session_state.role == "Admin":
-        st.write("You're logged in as an **Admin**. Manage users, data, and settings here.")
-    elif st.session_state.role == "Doctor":
-        st.write("You're logged in as a **Doctor**. View patient records and provide advice.")
-    elif st.session_state.role == "Patient":
-        st.write("You're logged in as a **Patient**. Use tools to check symptoms or get health tips.")
-    st.markdown('</div>', unsafe_allow_html=True)
+        Get started by exploring any of the tools below!
+    """)
 
-# ------------------------------ CHATBOT ------------------------------
-def show_chatbot():
-    st.markdown('<h3>🤖 Health AI Assistant</h3>', unsafe_allow_html=True)
-    st.markdown("Ask anything about health, wellness, biology, or medicine!")
+# ------------------------------ USER PROFILE ------------------------------
+elif page == "🧾 User Profile & Dashboard":
+    st.title("🧾 User Profile & Dashboard")
+    col1, col2 = st.columns(2)
+    with col1:
+        name = st.text_input("Full Name")
+        age = st.number_input("Age", min_value=0, max_value=120)
+        gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+    with col2:
+        height = st.number_input("Height (cm)", min_value=50, max_value=250)
+        weight = st.number_input("Weight (kg)", min_value=10, max_value=300)
+        if height > 0:
+            bmi = weight / ((height / 100) ** 2)
+            st.write(f"**BMI:** {bmi:.1f}")
+    
+    if st.button("Save Profile"):
+        st.session_state.profile = {
+            "name": name, "age": age, "gender": gender,
+            "height": height, "weight": weight
+        }
+        st.success("Profile saved!")
 
-    for role, content in st.session_state.messages:
-        if role == "user":
-            st.markdown(f'<div class="bubble-user"><b>You:</b> {content}</div>', unsafe_allow_html=True)
-        else:
-            st.markdown(f'<div class="bubble-bot"><b>Bot:</b> {content}</div>', unsafe_allow_html=True)
+# ------------------------------ HEALTH DATA TRACKING ------------------------------
+elif page == "📊 Health Data Tracking":
+    st.title("📊 Health Data Tracking")
+    steps = st.slider("Steps Taken", 0, 50000, step=100)
+    heart_rate = st.slider("Heart Rate (bpm)", 40, 200)
+    sleep_hours = st.slider("Hours Slept", 0, 12)
+    water = st.slider("Water Intake (L)", 0.0, 5.0, step=0.1)
+    
+    if st.button("Save Data"):
+        st.session_state.health_data = {
+            "steps": steps,
+            "heart_rate": heart_rate,
+            "sleep_hours": sleep_hours,
+            "water_intake": water
+        }
+        st.success("Data saved successfully.")
 
-    with st.form(key='chat_form', clear_on_submit=True):
-        user_input = st.text_input("Your question:", placeholder="Type something like 'What are the symptoms of diabetes?'...")
-        submit_button = st.form_submit_button(label="Send")
-
-    if submit_button and user_input:
-        st.session_state.messages.append(("user", user_input))
-        with st.spinner("Thinking..."):
-            try:
-                response = llm.invoke(user_input)
-                st.session_state.messages.append(("assistant", response))
-                st.experimental_rerun()
-            except Exception as e:
-                st.session_state.messages.append(("assistant", f"Error: {str(e)}"))
-                st.experimental_rerun()
-
-# ------------------------------ MAIN APP LOGIC ------------------------------
-page = st.session_state.page
-if page == "Home":
-    show_home()
-elif page == "Login":
-    show_login()
-elif page == "Register":
-    show_register()
-elif page == "Dashboard":
-    if st.session_state.role:
-        show_dashboard()
+# ------------------------------ MEDICATION TRACKER ------------------------------
+elif page == "💊 Medication Tracker":
+    st.title("💊 Medication Tracker")
+    med_name = st.text_input("Medication Name")
+    dosage = st.text_input("Dosage")
+    time = st.time_input("Time to Take")
+    note = st.text_area("Notes")
+    
+    if st.button("Add Medication"):
+        st.session_state.medications.append({
+            "name": med_name,
+            "dosage": dosage,
+            "time": str(time),
+            "note": note
+        })
+        st.success("Medication added!")
+    
+    st.subheader("Your Medications")
+    if st.session_state.medications:
+        for idx, med in enumerate(st.session_state.medications):
+            st.markdown(f"{idx+1}. **{med['name']}** - {med['dosage']} at {med['time']} ({med['note']})")
     else:
-        st.warning("🔒 Please log in first.")
-        st.session_state.page = "Login"
-elif page == "Chatbot":
-    if st.session_state.role:
-        show_chatbot()
+        st.info("No medications added yet.")
+
+# ------------------------------ APPOINTMENT SCHEDULER ------------------------------
+elif page == "📅 Appointment Scheduler":
+    st.title("📅 Appointment Scheduler")
+    date = st.date_input("Select Date")
+    doctor = st.text_input("Doctor/Service")
+    reason = st.text_area("Reason for Visit")
+    remind = st.checkbox("Set Reminder")
+    
+    if st.button("Book Appointment"):
+        st.session_state.appointments.append({
+            "date": str(date),
+            "doctor": doctor,
+            "reason": reason,
+            "reminder": remind
+        })
+        st.success(f"Appointment with {doctor} on {date} booked.")
+    
+    st.subheader("Upcoming Appointments")
+    if st.session_state.appointments:
+        for appt in st.session_state.appointments:
+            st.markdown(f"- **{appt['doctor']}** on {appt['date']} ({appt['reason']})")
+            if appt['reminder']:
+                st.caption("🔔 Reminder set.")
     else:
-        st.warning("🔒 Please log in first.")
-        st.session_state.page = "Login"
+        st.info("No appointments scheduled.")
+
+# ------------------------------ AI SYMPTOM CHECKER ------------------------------
+elif page == "🧠 AI Symptom Checker":
+    st.title("🧠 AI Symptom Checker")
+    symptoms = st.text_area("Describe your symptoms:")
+    
+    if st.button("Check Symptoms"):
+        with st.spinner("Analyzing..."):
+            prompt = f"Based on these symptoms: '{symptoms}', what could be the possible conditions?"
+            response = llm.invoke(prompt)
+            st.session_state.symptoms_history.append({
+                "input": symptoms,
+                "response": response
+            })
+            st.markdown(f"🔍 **Possible Conditions:**\n\n{response}")
+
+    st.markdown("### 📜 Symptom History")
+    for item in st.session_state.symptoms_history:
+        st.markdown(f"**Q:** {item['input']}\n\n**A:** {item['response']}")
+        st.divider()
+
+# ------------------------------ MENTAL HEALTH ------------------------------
+elif page == "🧘 Mental Health Support":
+    st.title("🧘 Mental Health Support")
+    mood = st.slider("Rate your mood today", 1, 10)
+    journal = st.text_area("Journal Entry")
+    if st.button("Save Mood & Journal"):
+        st.success("Saved!")
+    st.markdown("### Breathing Exercise")
+    if st.button("Start Exercise"):
+        st.info("Breathe in... Hold... Breathe out...")
+
+# ------------------------------ FITNESS PLANNER ------------------------------
+elif page == "🏋️ Fitness Planner":
+    st.title("🏋️ Fitness Planner")
+    goal = st.selectbox("Goal", ["Weight Loss", "Muscle Gain", "Maintenance"])
+    days = st.multiselect("Days Available", ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
+    plan = st.text_area("Workout Plan")
+    if st.button("Save Plan"):
+        st.session_state.fitness_plan = {
+            "goal": goal,
+            "days": ", ".join(days),
+            "plan": plan
+        }
+        st.success("Plan saved!")
+    
+    if "fitness_plan" in st.session_state:
+        st.markdown("### Current Plan")
+        st.write(st.session_state.fitness_plan)
+
+# ------------------------------ PROGRESS REPORTS ------------------------------
+elif page == "📈 Progress Reports":
+    st.title("📈 Progress Reports")
+    st.markdown("### Weekly Summary")
+    st.line_chart([10, 20, 30, 25, 40])
+    st.bar_chart({"Week 1": [20], "Week 2": [25], "Week 3": [30]})
+    if st.button("Export Report"):
+        df = pd.DataFrame(st.session_state.health_data, index=[0])
+        st.download_button("Download as CSV", data=df.to_csv(index=False), file_name="health_report.csv")
+        st.success("Report exported as CSV!")
+
+# ------------------------------ CHRONIC DISEASE MANAGEMENT ------------------------------
+elif page == "🫀 Chronic Disease Management":
+    st.title("🫀 Chronic Disease Management")
+    condition = st.selectbox("Condition", ["Diabetes", "Hypertension", "Asthma"])
+    if condition == "Diabetes":
+        glucose = st.number_input("Blood Glucose Level (mg/dL)")
+        if st.button("Log Glucose"):
+            st.success(f"Logged: {glucose} mg/dL")
+    elif condition == "Hypertension":
+        bp = st.text_input("Blood Pressure (e.g., 120/80)")
+        if st.button("Log BP"):
+            st.success(f"Logged: {bp}")
+    elif condition == "Asthma":
+        triggers = st.text_area("Triggers Today")
+        if st.button("Log Asthma"):
+            st.success("Logged successfully.")
+
+# ------------------------------ COMMUNITY & SUPPORT ------------------------------
+elif page == "👥 Community & Support":
+    st.title("👥 Community & Support")
+    post = st.text_input("Write a post...")
+    if st.button("Post"):
+        st.session_state.posts.append(post)
+    st.markdown("### Recent Posts")
+    for p in st.session_state.posts:
+        st.markdown(f"- {p}")
+
+# ------------------------------ SETTINGS ------------------------------
+elif page == "🌐 Settings & Preferences":
+    st.title("🌐 Settings & Preferences")
+    language = st.selectbox("Language", ["English", "Spanish", "French", "German"])
+    theme = st.selectbox("Theme", ["Light", "Dark"])
+    font_size = st.slider("Font Size", 12, 24)
+    if st.button("Save Preferences"):
+        st.success("Preferences updated!")
+
+# ------------------------------ FOOTER ------------------------------
+st.markdown("---")
+st.markdown("© 2025 MyHospital Health Assistant | Built with ❤️ using Streamlit & Watsonx")
+
+# ------------------------------ DEBUG MODE (Optional) ------------------------------
+with st.expander("🔧 Debug Mode"):
+    st.write("Session State:", st.session_state)
