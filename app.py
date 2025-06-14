@@ -280,7 +280,7 @@ elif page == "📈 Progress Reports":
     st.line_chart([10, 20, 30, 25, 40])
     st.bar_chart({"Week 1": [20], "Week 2": [25], "Week 3": [30]})
     if st.button("Export Report"):
-        df = pd.DataFrame(st.session_state.health_data, index=[0])
+        df = pd.DataFrame([st.session_state.health_data])  # Wrap dict in list for DataFrame
         st.download_button("Download as CSV", data=df.to_csv(index=False), file_name="health_report.csv")
         st.success("Report exported as CSV!")
 
