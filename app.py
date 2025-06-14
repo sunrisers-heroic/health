@@ -2,11 +2,12 @@ import streamlit as st
 from langchain_ibm import WatsonxLLM
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
 import pandas as pd
+from datetime import datetime
 
 # Page config
 st.set_page_config(page_title="🩺 Health Assistant", layout="wide", page_icon="🩺")
 
-# Custom CSS for green/blue hospital-themed UI
+# Custom CSS for green/blue themed UI
 st.markdown("""
     <style>
         body {
@@ -104,37 +105,43 @@ except Exception as e:
     st.error(f"🚨 Error initializing LLM: {str(e)}")
     st.stop()
 
-# Navigation bar with buttons
+# Top Navigation Buttons
 st.markdown('<div class="navbar">', unsafe_allow_html=True)
-col1, col2, col3, col4, col5 = st.columns(5)
+col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
 
 with col1:
     if st.button("🩺 Home", key="btn_home", use_container_width=True):
         st.session_state.current_section = "home"
 with col2:
+    if st.button("🔐 Login", key="btn_login", use_container_width=True):
+        st.session_state.current_section = "login"
+with col3:
     if st.button("🧾 Profile", key="btn_profile", use_container_width=True):
         st.session_state.current_section = "profile"
-with col3:
-    if st.button("🧠 Symptom Checker", key="btn_symptoms", use_container_width=True):
-        st.session_state.current_section = "symptoms"
 with col4:
-    if st.button("📊 Reports", key="btn_reports", use_container_width=True):
-        st.session_state.current_section = "reports"
+    if st.button("🧠 Symptoms", key="btn_symptoms", use_container_width=True):
+        st.session_state.current_section = "symptoms"
 with col5:
+    if st.button("📈 Reports", key="btn_reports", use_container_width=True):
+        st.session_state.current_section = "reports"
+with col6:
+    if st.button("🫀 Diseases", key="btn_diseases", use_container_width=True):
+        st.session_state.current_section = "diseases"
+with col7:
     if st.button("⚙️ Settings", key="btn_settings", use_container_width=True):
         st.session_state.current_section = "settings"
+
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ------------------------------ HEADER ------------------------------
+# Header
 st.markdown('<h1 style="text-align:center; color:#007acc;">🩺 Health Assistant</h1>', unsafe_allow_html=True)
 st.markdown('<p style="text-align:center; font-size:16px;">A modern health tracking and wellness assistant.</p>', unsafe_allow_html=True)
 
-# ------------------------------ SECTIONS ------------------------------
-
+# Function to show/hide sections
 def show_section(name):
     return st.session_state.current_section == name
 
-# --- HOME ---
+# ------------------------------ HOME PAGE ------------------------------
 if show_section("home"):
     st.markdown('<div class="active-section">', unsafe_allow_html=True)
     st.markdown('<h2>Welcome to Your Health Assistant 🏥</h2>', unsafe_allow_html=True)
@@ -151,8 +158,19 @@ if show_section("home"):
     """)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- PROFILE ---
-elif show_section("profile"):
+# ------------------------------ LOGIN ------------------------------
+if show_section("login"):
+    st.markdown('<div class="active-section">', unsafe_allow_html=True)
+    st.markdown('<h2>🔐 Login</h2>', unsafe_allow_html=True)
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        st.session_state.user_logged_in = True
+        st.success("Logged in successfully!")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ------------------------------ USER PROFILE ------------------------------
+if show_section("profile"):
     st.markdown('<div class="active-section">', unsafe_allow_html=True)
     st.markdown('<h2>🧾 User Profile & Dashboard</h2>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
@@ -171,8 +189,8 @@ elif show_section("profile"):
         st.success("Profile saved!")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- SYMPTOM CHECKER ---
-elif show_section("symptoms"):
+# ------------------------------ SYMPTOM CHECKER ------------------------------
+if show_section("symptoms"):
     st.markdown('<div class="active-section">', unsafe_allow_html=True)
     st.markdown('<h2>🧠 AI Symptom Checker</h2>', unsafe_allow_html=True)
     symptoms = st.text_area("Describe your symptoms:")
@@ -180,10 +198,7 @@ elif show_section("symptoms"):
         with st.spinner("Analyzing..."):
             prompt = f"Based on these symptoms: '{symptoms}', what could be the possible conditions?"
             response = llm.invoke(prompt)
-            st.session_state.symptoms_history.append({
-                "input": symptoms,
-                "response": response
-            })
+            st.session_state.symptoms_history.append({"input": symptoms, "response": response})
             st.markdown(f"🔍 **Possible Conditions:**\n\n{response}")
 
     st.markdown("### 📜 Symptom History")
@@ -192,8 +207,8 @@ elif show_section("symptoms"):
         st.divider()
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- REPORTS ---
-elif show_section("reports"):
+# ------------------------------ PROGRESS REPORTS ------------------------------
+if show_section("reports"):
     st.markdown('<div class="active-section">', unsafe_allow_html=True)
     st.markdown('<h2>📈 Progress Reports</h2>', unsafe_allow_html=True)
     steps = st.slider("Steps Taken", 0, 50000, step=100)
@@ -217,11 +232,29 @@ elif show_section("reports"):
         df = pd.DataFrame([st.session_state.health_data])
         st.download_button("Download CSV", data=df.to_csv(index=False), file_name="health_report.csv")
         st.success("Report exported as CSV!")
-
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- SETTINGS ---
-elif show_section("settings"):
+# ------------------------------ CHRONIC DISEASE MANAGEMENT ------------------------------
+if show_section("diseases"):
+    st.markdown('<div class="active-section">', unsafe_allow_html=True)
+    st.markdown('<h2>🫀 Chronic Disease Logs</h2>', unsafe_allow_html=True)
+    condition = st.selectbox("Condition", ["Diabetes", "Hypertension", "Asthma"])
+    if condition == "Diabetes":
+        glucose = st.number_input("Blood Glucose Level (mg/dL)")
+        if st.button("Log Glucose"):
+            st.success(f"Logged: {glucose} mg/dL")
+    elif condition == "Hypertension":
+        bp = st.text_input("Blood Pressure (e.g., 120/80)")
+        if st.button("Log BP"):
+            st.success(f"Logged: {bp}")
+    elif condition == "Asthma":
+        triggers = st.text_area("Triggers Today")
+        if st.button("Log Asthma"):
+            st.success("Logged successfully.")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ------------------------------ SETTINGS ------------------------------
+if show_section("settings"):
     st.markdown('<div class="active-section">', unsafe_allow_html=True)
     st.markdown('<h2>⚙️ Settings & Preferences</h2>', unsafe_allow_html=True)
     language = st.selectbox("Language", ["English", "Spanish", "French", "German"])
@@ -231,12 +264,10 @@ elif show_section("settings"):
         st.success("Preferences updated!")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Default fallback
-else:
-    st.markdown('<div class="active-section">', unsafe_allow_html=True)
-    st.info("Select a feature from the navigation above.")
-    st.markdown('</div>', unsafe_allow_html=True)
-
 # Footer
 st.markdown("---")
 st.markdown("© 2025 MyHospital Health Assistant | Built with ❤️ using Streamlit & Watsonx")
+
+# Debug Mode
+with st.expander("🔧 Debug Mode"):
+    st.write("Session State:", st.session_state)
