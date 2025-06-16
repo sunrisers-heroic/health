@@ -8,3 +8,5 @@ numpy
 chromadb
 tiktoken
 bs4
+matplotlib
+plotly
