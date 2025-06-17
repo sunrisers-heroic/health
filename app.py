@@ -8,13 +8,12 @@ from datetime import datetime, timedelta
 # Page config
 st.set_page_config(page_title="🩺 Health Assistant", layout="wide", page_icon="🩺")
 
-# Custom CSS for advanced animated UI and modern theme
+# Custom CSS for animated UI and green/blue theme
 st.markdown("""
     <style>
         body {
             background-color: #f0fff4;
-            font-family: 'Poppins', sans-serif;
-            overflow-x: hidden;
+            font-family: Arial, sans-serif;
         }
         .main {
             background-color: #ffffff;
@@ -25,23 +24,21 @@ st.markdown("""
         }
         .card {
             background-color: #ffffff;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 15px 20px;
+            border-left: 5px solid #2ecc71;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             animation: fadeIn 0.5s ease-in-out;
-            transition: all 0.3s ease;
         }
         @keyframes fadeIn {
-            from {opacity: 0; transform: translateY(20px);}
+            from {opacity: 0; transform: translateY(10px);}
             to {opacity: 1; transform: translateY(0);}
-        }
-        .card:hover {
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
         }
         .chat-bubble-user {
             background-color: #d6eaff;
             padding: 10px;
-            border-radius: 15px;
+            border-radius: 10px;
             max-width: 70%;
             align-self: flex-end;
             margin: 5px 0;
@@ -49,7 +46,7 @@ st.markdown("""
         .chat-bubble-bot {
             background-color: #e6f0ff;
             padding: 10px;
-            border-radius: 15px;
+            border-radius: 10px;
             max-width: 70%;
             align-self: flex-start;
             margin: 5px 0;
@@ -60,7 +57,7 @@ st.markdown("""
             gap: 15px;
             padding: 10px 0;
             background: linear-gradient(to right, #2ecc71, #27ae60);
-            border-radius: 15px;
+            border-radius: 8px;
             margin-bottom: 20px;
         }
         .nav-button {
@@ -69,75 +66,34 @@ st.markdown("""
             border: none;
             padding: 10px 16px;
             font-size: 16px;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .nav-button:hover {
             background-color: #eafaf1;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        .fade-enter {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .fade-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: all 0.3s ease;
         }
         .metric-box {
             padding: 10px;
-            border-radius: 15px;
+            border-radius: 8px;
             background-color: #ecf0f1;
             margin: 5px;
             text-align: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .positive {
             color: green;
         }
         .negative {
             color: red;
-        }
-        .header-title {
-            font-size: 36px;
-            font-weight: bold;
-            color: #2ecc71;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        }
-        .section-title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2ecc71;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-        }
-        .input-field {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-        .input-field:focus {
-            border-color: #2ecc71;
-            box-shadow: 0 0 5px rgba(46, 204, 113, 0.5);
-        }
-        .button {
-            background-color: #2ecc71;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .button:hover {
-            background-color: #27ae60;
-        }
-        .loader {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #2ecc71;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
     </style>
 """, unsafe_allow_html=True)
@@ -216,8 +172,8 @@ with col9:
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Header
-st.markdown('<h1 class="header-title">🩺 Health Assistant</h1>', unsafe_allow_html=True)
-st.markdown('<p style="text-align:center; font-size:18px;">A modern health tracking and wellness assistant.</p>', unsafe_allow_html=True)
+st.markdown('<h1 style="text-align:center; color:#2ecc71;">🩺 Health Assistant</h1>', unsafe_allow_html=True)
+st.markdown('<p style="text-align:center; font-size:16px;">A modern health tracking and wellness assistant.</p>', unsafe_allow_html=True)
 
 # Function to show/hide sections with animation
 def render_section(title, content):
@@ -227,7 +183,7 @@ def render_section(title, content):
 # ------------------------------ HOME PAGE ------------------------------
 if st.session_state.current_section == "home":
     render_section(
-        "<h2 class='section-title'>Welcome to Your Personalized Health Assistant</h2>",
+        "<h2>🩺 Welcome to Your Personalized Health Assistant</h2>",
         """
         This application helps you manage your health comprehensively — from symptom checks to fitness planning.
         ### 🧠 Highlights:
@@ -242,32 +198,32 @@ if st.session_state.current_section == "home":
 
 # ------------------------------ LOGIN PAGE ------------------------------
 elif st.session_state.current_section == "login":
-    render_section("<h2 class='section-title'>Login</h2>", """
+    render_section("<h2>🔐 Login</h2>", """
         <form>
             <label>Username:</label><br>
-            <input type="text" placeholder="Enter username" class="input-field"><br><br>
+            <input type="text" placeholder="Enter username"><br><br>
             <label>Password:</label><br>
-            <input type="password" placeholder="Enter password" class="input-field"><br><br>
-            <button class="button">Login</button>
+            <input type="password" placeholder="Enter password"><br><br>
+            <button>Login</button>
         </form>
     """)
 
 # ------------------------------ USER PROFILE ------------------------------
 elif st.session_state.current_section == "profile":
     st.markdown('<div class="card fade-enter-active">', unsafe_allow_html=True)
-    st.markdown('<h2 class="section-title">User Profile & Dashboard</h2>', unsafe_allow_html=True)
+    st.markdown('<h2>🧾 User Profile & Dashboard</h2>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
-        name = st.text_input("Full Name", key="name_input", placeholder="Enter your full name", class_="input-field")
-        age = st.number_input("Age", min_value=0, max_value=120, value=0, step=1, key="age_input", class_="input-field")
-        gender = st.selectbox("Gender", ["Male", "Female", "Other"], key="gender_select", class_="input-field")
+        name = st.text_input("Full Name")
+        age = st.number_input("Age", min_value=0, max_value=120)
+        gender = st.selectbox("Gender", ["Male", "Female", "Other"])
     with col2:
-        height = st.number_input("Height (cm)", min_value=50, max_value=250, value=170, step=1, key="height_input", class_="input-field")
-        weight = st.number_input("Weight (kg)", min_value=10, max_value=300, value=70, step=1, key="weight_input", class_="input-field")
+        height = st.number_input("Height (cm)", min_value=50, max_value=250)
+        weight = st.number_input("Weight (kg)", min_value=10, max_value=300)
         if height > 0:
             bmi = weight / ((height / 100) ** 2)
             st.write(f"**BMI:** {bmi:.1f}")
-    if st.button("Save Profile", class_="button"):
+    if st.button("Save Profile"):
         st.session_state.profile = {"name": name, "age": age, "gender": gender, "height": height, "weight": weight}
         prompt = f"Give general health tips for a {age}-year-old {gender} with height {height} cm and weight {weight} kg."
         response = llm.invoke(prompt)
@@ -278,23 +234,23 @@ elif st.session_state.current_section == "profile":
 # ------------------------------ SYMPTOM CHECKER ------------------------------
 elif st.session_state.current_section == "symptoms":
     st.markdown('<div class="card fade-enter-active">', unsafe_allow_html=True)
-    st.markdown('<h2 class="section-title">AI Symptom Checker</h2>', unsafe_allow_html=True)
-    symptoms = st.text_area("Describe your symptoms:", key="symptoms_input", class_="input-field")
-    if st.button("Check Symptoms", class_="button"):
+    st.markdown('<h2>🧠 AI Symptom Checker</h2>', unsafe_allow_html=True)
+    symptoms = st.text_area("Describe your symptoms:")
+    if st.button("Check Symptoms"):
         with st.spinner("Analyzing..."):
-            prompt = f"""
+            prompt = """
             Based on these symptoms: '{symptoms}', provide a list of possible conditions,
             their likelihood percentages, and next steps like when to see a doctor or self-care measures.
             Format the output as JSON.
-            """
+            """.format(symptoms=symptoms)
             response = llm.invoke(prompt)
             try:
                 result = eval(response.strip())  # assuming structured format
                 st.session_state.symptoms_history.append({"input": symptoms, "response": result})
                 st.json(result)
-            except:
-                st.error("Invalid response format from AI.")
-    st.markdown("### Symptom History")
+            except Exception as e:
+                st.error(f"Invalid response format from AI: {str(e)}")
+    st.markdown("### 📜 Symptom History")
     for item in st.session_state.symptoms_history:
         st.markdown(f"**Q:** {item['input']}")
         st.json(item['response'])
@@ -304,9 +260,9 @@ elif st.session_state.current_section == "symptoms":
 # ------------------------------ CHATBOT ------------------------------
 elif st.session_state.current_section == "chat":
     st.markdown('<div class="card fade-enter-active">', unsafe_allow_html=True)
-    st.markdown('<h2 class="section-title">AI Chatbot</h2>', unsafe_allow_html=True)
-    user_input = st.text_input("Ask anything about health...", key="chat_input", class_="input-field")
-    if st.button("Send", class_="button") and user_input:
+    st.markdown('<h2>🤖 AI Chatbot</h2>', unsafe_allow_html=True)
+    user_input = st.text_input("Ask anything about health...")
+    if st.button("Send") and user_input:
         st.session_state.messages.append(("user", user_input))
         with st.spinner("Thinking..."):
             ai_response = llm.invoke(user_input)
@@ -319,32 +275,32 @@ elif st.session_state.current_section == "chat":
 # ------------------------------ TREATMENTS ------------------------------
 elif st.session_state.current_section == "treatments":
     st.markdown('<div class="card fade-enter-active">', unsafe_allow_html=True)
-    st.markdown('<h2 class="section-title">Personalized Treatment Planner</h2>', unsafe_allow_html=True)
-    condition = st.text_input("Condition / Diagnosis", key="condition_input", class_="input-field")
-    patient_details = st.text_area("Patient Details (Age, Gender, Comorbidities)", key="patient_details_input", class_="input-field")
-    if st.button("Generate Treatment Plan", class_="button"):
+    st.markdown('<h2>💊 Personalized Treatment Planner</h2>', unsafe_allow_html=True)
+    condition = st.text_input("Condition / Diagnosis")
+    patient_details = st.text_area("Patient Details (Age, Gender, Comorbidities)")
+    if st.button("Generate Treatment Plan"):
         with st.spinner("Generating plan..."):
-            prompt = f"""
+            prompt = """
             Create a personalized treatment plan for a patient with:
             Condition: {condition}
             Details: {patient_details}
             Include medications, lifestyle changes, follow-up care, and duration.
             Format as JSON.
-            """
+            """.format(condition=condition, patient_details=patient_details)
             response = llm.invoke(prompt)
             try:
                 plan = eval(response.strip())
                 st.session_state.treatment_plan = plan
                 st.json(plan)
-            except:
-                st.error("Failed to parse treatment plan.")
+            except Exception as e:
+                st.error(f"Failed to parse treatment plan: {str(e)}")
     st.markdown('</div>')
 
 # ------------------------------ REPORTS ------------------------------
 elif st.session_state.current_section == "reports":
     st.markdown('<div class="card fade-enter-active">', unsafe_allow_html=True)
-    st.markdown('<h2 class="section-title">Progress Reports</h2>', unsafe_allow_html=True)
-    days = st.slider("Days of Trend", 1, 30, value=7, key="days_slider")
+    st.markdown('<h2>📈 Progress Reports</h2>', unsafe_allow_html=True)
+    days = st.slider("Days of Trend", 1, 30, value=7)
     dates = [(datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(days)]
     heart_rates = [random.randint(60, 100) for _ in range(days)]
     glucose_levels = [round(random.uniform(70, 140), 1) for _ in range(days)]
@@ -363,7 +319,7 @@ elif st.session_state.current_section == "reports":
     avg_gluc = round(sum(glucose_levels) / len(glucose_levels))
     st.markdown(f"<div class='metric-box'>Avg Heart Rate: {avg_hr} bpm <span class='positive'>▲+1</span></div>", unsafe_allow_html=True)
     st.markdown(f"<div class='metric-box'>Avg Glucose: {avg_gluc} mg/dL <span class='negative'>▼-2</span></div>", unsafe_allow_html=True)
-    if st.button("Generate AI Report Summary", class_="button"):
+    if st.button("Generate AI Report Summary"):
         prompt = f"Provide insights based on these health trends: {df.describe().to_string()}. Give actionable advice."
         summary = llm.invoke(prompt)
         st.markdown(f"📊 **AI Analysis:**\n{summary}")
@@ -372,12 +328,12 @@ elif st.session_state.current_section == "reports":
 # ------------------------------ CHRONIC DISEASE MANAGEMENT ------------------------------
 elif st.session_state.current_section == "diseases":
     st.markdown('<div class="card fade-enter-active">', unsafe_allow_html=True)
-    st.markdown('<h2 class="section-title">Chronic Disease Logs</h2>', unsafe_allow_html=True)
-    condition = st.selectbox("Condition", ["Diabetes", "Hypertension", "Asthma"], key="disease_select")
+    st.markdown('<h2>🫀 Chronic Disease Logs</h2>', unsafe_allow_html=True)
+    condition = st.selectbox("Condition", ["Diabetes", "Hypertension", "Asthma"])
     if condition == "Diabetes":
-        st.markdown("### Blood Glucose Tracker")
-        glucose = st.number_input("Blood Glucose Level (mg/dL)", min_value=40, max_value=400, step=5, key="glucose_input")
-        if st.button("Log Glucose", class_="button"):
+        st.markdown("### 🩸 Blood Glucose Tracker")
+        glucose = st.number_input("Blood Glucose Level (mg/dL)", min_value=40, max_value=400, step=5)
+        if st.button("Log Glucose"):
             st.session_state.glucose_log = st.session_state.get("glucose_log", []) + [glucose]
             st.success(f"Logged: {glucose} mg/dL")
             prompt = f"My blood sugar is {glucose}. Is it normal? What should I do?"
@@ -393,13 +349,13 @@ elif st.session_state.current_section == "diseases":
             })
             st.line_chart(df_glucose.set_index("Date")["Glucose Level (mg/dL)"])
     elif condition == "Hypertension":
-        st.markdown("### Blood Pressure Log")
+        st.markdown("### 💓 Blood Pressure Log")
         col1, col2 = st.columns(2)
         with col1:
-            systolic = st.number_input("Systolic (mmHg)", min_value=90, max_value=200, value=120, key="systolic_input")
+            systolic = st.number_input("Systolic (mmHg)", min_value=90, max_value=200, value=120)
         with col2:
-            diastolic = st.number_input("Diastolic (mmHg)", min_value=60, max_value=130, value=80, key="diastolic_input")
-        if st.button("Log BP", class_="button"):
+            diastolic = st.number_input("Diastolic (mmHg)", min_value=60, max_value=130, value=80)
+        if st.button("Log BP"):
             st.session_state.bp_log = st.session_state.get("bp_log", []) + [(systolic, diastolic)]
             st.success(f"Logged: {systolic}/{diastolic} mmHg")
             prompt = f"My blood pressure is {systolic}/{diastolic} mmHg. What does that mean?"
@@ -413,10 +369,10 @@ elif st.session_state.current_section == "diseases":
             bp_data["Date"] = [datetime.now() - timedelta(days=i) for i in range(len(bp_data))]
             st.line_chart(bp_data.set_index("Date")[["Systolic", "Diastolic"]])
     elif condition == "Asthma":
-        st.markdown("### Asthma Trigger Tracker")
-        triggers = st.text_area("Triggers Today (e.g., pollen, dust)", key="triggers_input")
-        severity = st.slider("Severity (1-10)", 1, 10, key="severity_slider")
-        if st.button("Log Asthma Episode", class_="button"):
+        st.markdown("### 🌬️ Asthma Trigger Tracker")
+        triggers = st.text_area("Triggers Today (e.g., pollen, dust)")
+        severity = st.slider("Severity (1-10)", 1, 10)
+        if st.button("Log Asthma Episode"):
             st.session_state.asthma_log = st.session_state.get("asthma_log", []) + [{"triggers": triggers, "severity": severity}]
             st.success("Episode logged successfully.")
             prompt = f"What are some ways to avoid asthma triggers like {triggers}?"
@@ -436,5 +392,5 @@ st.markdown("---")
 st.markdown("© 2025 MyHospital Health Assistant | Built with ❤️ using Streamlit & Watsonx")
 
 # Debug Mode
-with st.expander("Debug Mode"):
+with st.expander("🔧 Debug Mode"):
     st.write("Session State:", st.session_state)
