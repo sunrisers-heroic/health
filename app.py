@@ -322,8 +322,7 @@ elif st.session_state.current_section == "reports":
     if st.button("Generate AI Report Summary"):
         prompt = f"Provide insights based on these health trends: {df.describe().to_string()}. Give actionable advice."
         summary = llm.invoke(prompt)
-        st.markdown(f"📊 **AI Analysis:**
-{summary}")
+        st.markdown(f"📊 **AI Analysis:**\n{summary}")
     st.markdown('</div>')
 
 # ------------------------------ CHRONIC DISEASE MANAGEMENT ------------------------------
@@ -342,8 +341,7 @@ elif st.session_state.current_section == "diseases":
                 advice = llm.invoke(prompt)
             except:
                 advice = "AI is currently unavailable for advice."
-            st.markdown(f"🤖 **AI Advice:**
-{advice}")
+            st.markdown(f"🤖 **AI Advice:**\n{advice}")
         if "glucose_log" in st.session_state and len(st.session_state.glucose_log) > 0:
             df_glucose = pd.DataFrame({
                 "Date": [datetime.now() - timedelta(days=i) for i in range(len(st.session_state.glucose_log))],
@@ -365,8 +363,7 @@ elif st.session_state.current_section == "diseases":
                 advice = llm.invoke(prompt)
             except:
                 advice = "AI is currently unavailable for advice."
-            st.markdown(f"🤖 **AI Advice:**
-{advice}")
+            st.markdown(f"🤖 **AI Advice:**\n{advice}")
         if "bp_log" in st.session_state and len(st.session_state.bp_log) > 0:
             bp_data = pd.DataFrame(st.session_state.bp_log, columns=["Systolic", "Diastolic"])
             bp_data["Date"] = [datetime.now() - timedelta(days=i) for i in range(len(bp_data))]
@@ -383,8 +380,7 @@ elif st.session_state.current_section == "diseases":
                 advice = llm.invoke(prompt)
             except:
                 advice = "AI is currently unavailable for advice."
-            st.markdown(f"🤖 **AI Advice:**
-{advice}")
+            st.markdown(f"🤖 **AI Advice:**\n{advice}")
         if "asthma_log" in st.session_state and len(st.session_state.asthma_log) > 0:
             asthma_df = pd.DataFrame(st.session_state.asthma_log)
             asthma_df["Date"] = [datetime.now() - timedelta(days=i) for i in range(len(asthma_df))]
