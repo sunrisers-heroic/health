@@ -250,7 +250,6 @@ elif st.session_state.current_section == "symptoms":
                 st.json(result)
             except:
                 st.error("Invalid response format from AI.")
-
     st.markdown("### 📜 Symptom History")
     for item in st.session_state.symptoms_history:
         st.markdown(f"**Q:** {item['input']}")
@@ -315,47 +314,42 @@ elif st.session_state.current_section == "reports":
     })
     st.line_chart(df.set_index("Date")[["Heart Rate", "Glucose Level"]])
     st.line_chart(df.set_index("Date")[["Systolic BP", "Diastolic BP"]])
-
     st.markdown("### Metric Summary")
     avg_hr = round(sum(heart_rates) / len(heart_rates))
     avg_gluc = round(sum(glucose_levels) / len(glucose_levels))
     st.markdown(f"<div class='metric-box'>Avg Heart Rate: {avg_hr} bpm <span class='positive'>▲+1</span></div>", unsafe_allow_html=True)
     st.markdown(f"<div class='metric-box'>Avg Glucose: {avg_gluc} mg/dL <span class='negative'>▼-2</span></div>", unsafe_allow_html=True)
-
     if st.button("Generate AI Report Summary"):
         prompt = f"Provide insights based on these health trends: {df.describe().to_string()}. Give actionable advice."
         summary = llm.invoke(prompt)
-        st.markdown(f"📊 **AI Analysis:**\n{summary}")
+        st.markdown(f"📊 **AI Analysis:**
+{summary}")
     st.markdown('</div>')
 
 # ------------------------------ CHRONIC DISEASE MANAGEMENT ------------------------------
 elif st.session_state.current_section == "diseases":
     st.markdown('<div class="card fade-enter-active">', unsafe_allow_html=True)
     st.markdown('<h2>🫀 Chronic Disease Logs</h2>', unsafe_allow_html=True)
-    
     condition = st.selectbox("Condition", ["Diabetes", "Hypertension", "Asthma"])
-
     if condition == "Diabetes":
         st.markdown("### 🩸 Blood Glucose Tracker")
         glucose = st.number_input("Blood Glucose Level (mg/dL)", min_value=40, max_value=400, step=5)
         if st.button("Log Glucose"):
             st.session_state.glucose_log = st.session_state.get("glucose_log", []) + [glucose]
             st.success(f"Logged: {glucose} mg/dL")
-
             prompt = f"My blood sugar is {glucose}. Is it normal? What should I do?"
             try:
                 advice = llm.invoke(prompt)
             except:
                 advice = "AI is currently unavailable for advice."
-            st.markdown(f"🤖 **AI Advice:**\n{advice}")
-
+            st.markdown(f"🤖 **AI Advice:**
+{advice}")
         if "glucose_log" in st.session_state and len(st.session_state.glucose_log) > 0:
             df_glucose = pd.DataFrame({
                 "Date": [datetime.now() - timedelta(days=i) for i in range(len(st.session_state.glucose_log))],
                 "Glucose Level (mg/dL)": st.session_state.glucose_log
             })
             st.line_chart(df_glucose.set_index("Date")["Glucose Level (mg/dL)"])
-
     elif condition == "Hypertension":
         st.markdown("### 💓 Blood Pressure Log")
         col1, col2 = st.columns(2)
@@ -363,23 +357,20 @@ elif st.session_state.current_section == "diseases":
             systolic = st.number_input("Systolic (mmHg)", min_value=90, max_value=200, value=120)
         with col2:
             diastolic = st.number_input("Diastolic (mmHg)", min_value=60, max_value=130, value=80)
-
         if st.button("Log BP"):
             st.session_state.bp_log = st.session_state.get("bp_log", []) + [(systolic, diastolic)]
             st.success(f"Logged: {systolic}/{diastolic} mmHg")
-
             prompt = f"My blood pressure is {systolic}/{diastolic} mmHg. What does that mean?"
             try:
                 advice = llm.invoke(prompt)
             except:
                 advice = "AI is currently unavailable for advice."
-            st.markdown(f"🤖 **AI Advice:**\n{advice}")
-
+            st.markdown(f"🤖 **AI Advice:**
+{advice}")
         if "bp_log" in st.session_state and len(st.session_state.bp_log) > 0:
             bp_data = pd.DataFrame(st.session_state.bp_log, columns=["Systolic", "Diastolic"])
             bp_data["Date"] = [datetime.now() - timedelta(days=i) for i in range(len(bp_data))]
             st.line_chart(bp_data.set_index("Date")[["Systolic", "Diastolic"]])
-
     elif condition == "Asthma":
         st.markdown("### 🌬️ Asthma Trigger Tracker")
         triggers = st.text_area("Triggers Today (e.g., pollen, dust)")
@@ -387,19 +378,17 @@ elif st.session_state.current_section == "diseases":
         if st.button("Log Asthma Episode"):
             st.session_state.asthma_log = st.session_state.get("asthma_log", []) + [{"triggers": triggers, "severity": severity}]
             st.success("Episode logged successfully.")
-
             prompt = f"What are some ways to avoid asthma triggers like {triggers}?"
             try:
                 advice = llm.invoke(prompt)
             except:
                 advice = "AI is currently unavailable for advice."
-            st.markdown(f"🤖 **AI Advice:**\n{advice}")
-
+            st.markdown(f"🤖 **AI Advice:**
+{advice}")
         if "asthma_log" in st.session_state and len(st.session_state.asthma_log) > 0:
             asthma_df = pd.DataFrame(st.session_state.asthma_log)
             asthma_df["Date"] = [datetime.now() - timedelta(days=i) for i in range(len(asthma_df))]
             st.line_chart(asthma_df.set_index("Date")["severity"])
-
     st.markdown('</div>')
 
 # Footer
