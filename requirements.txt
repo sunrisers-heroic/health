@@ -2,9 +2,6 @@ ibm_watson_machine_learning
 ibm-watsonx-ai
 langchain
 langchain-ibm
-pandas
-numpy
-chromadb
-tiktoken
-bs4
+
+
 
