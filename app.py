@@ -95,6 +95,16 @@ st.markdown("""
         .negative {
             color: red;
         }
+        /* Sidebar Styles */
+        .sidebar {
+            width: 200px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-right: 1px solid #ddd;
+        }
+        .sidebar button {
+            margin-bottom: 10px;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -141,7 +151,7 @@ except Exception as e:
 
 # Top Navigation Buttons
 st.markdown('<div class="navbar">', unsafe_allow_html=True)
-col1, col2, col3, col4, col5, col6, col7, col8, col9 = st.columns(9)
+col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
     if st.button("🏠 Home", key="btn_home", use_container_width=True):
         st.session_state.current_section = "home"
@@ -152,24 +162,23 @@ with col3:
     if st.button("🧾 Profile", key="btn_profile", use_container_width=True):
         st.session_state.current_section = "profile"
 with col4:
-    if st.button("🧠 Symptoms", key="btn_symptoms", use_container_width=True):
-        st.session_state.current_section = "symptoms"
-with col5:
-    if st.button("🤖 Chat", key="btn_chat", use_container_width=True):
-        st.session_state.current_section = "chat"
-with col6:
-    if st.button("🫀 Diseases", key="btn_diseases", use_container_width=True):
-        st.session_state.current_section = "diseases"
-with col7:
-    if st.button("📈 Reports", key="btn_reports", use_container_width=True):
-        st.session_state.current_section = "reports"
-with col8:
-    if st.button("💊 Treatments", key="btn_treatments", use_container_width=True):
-        st.session_state.current_section = "treatments"
-with col9:
     if st.button("⚙️ Settings", key="btn_settings", use_container_width=True):
         st.session_state.current_section = "settings"
 st.markdown('</div>', unsafe_allow_html=True)
+
+# Sidebar for additional options
+st.sidebar.markdown('<div class="sidebar">', unsafe_allow_html=True)
+if st.sidebar.button("💬 Chat"):
+    st.session_state.current_section = "chat"
+if st.sidebar.button("_SYMPTOMS_"):
+    st.session_state.current_section = "symptoms"
+if st.sidebar.button("🦠 Diseases"):
+    st.session_state.current_section = "diseases"
+if st.sidebar.button("📊 Report"):
+    st.session_state.current_section = "reports"
+if st.sidebar.button("💊 Treatment"):
+    st.session_state.current_section = "treatments"
+st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 # Header
 st.markdown('<h1 style="text-align:center; color:#2ecc71;">🩺 Health Assistant</h1>', unsafe_allow_html=True)
@@ -322,7 +331,8 @@ elif st.session_state.current_section == "reports":
     if st.button("Generate AI Report Summary"):
         prompt = f"Provide insights based on these health trends: {df.describe().to_string()}. Give actionable advice."
         summary = llm.invoke(prompt)
-        st.markdown(f"📊 **AI Analysis:**\n{summary}")
+        st.markdown(f"📊 **AI Analysis:**
+{summary}")
     st.markdown('</div>')
 
 # ------------------------------ CHRONIC DISEASE MANAGEMENT ------------------------------
@@ -341,7 +351,8 @@ elif st.session_state.current_section == "diseases":
                 advice = llm.invoke(prompt)
             except:
                 advice = "AI is currently unavailable for advice."
-            st.markdown(f"🤖 **AI Advice:**\n{advice}")
+            st.markdown(f"🤖 **AI Advice:**
+{advice}")
         if "glucose_log" in st.session_state and len(st.session_state.glucose_log) > 0:
             df_glucose = pd.DataFrame({
                 "Date": [datetime.now() - timedelta(days=i) for i in range(len(st.session_state.glucose_log))],
@@ -363,7 +374,8 @@ elif st.session_state.current_section == "diseases":
                 advice = llm.invoke(prompt)
             except:
                 advice = "AI is currently unavailable for advice."
-            st.markdown(f"🤖 **AI Advice:**\n{advice}")
+            st.markdown(f"🤖 **AI Advice:**
+{advice}")
         if "bp_log" in st.session_state and len(st.session_state.bp_log) > 0:
             bp_data = pd.DataFrame(st.session_state.bp_log, columns=["Systolic", "Diastolic"])
             bp_data["Date"] = [datetime.now() - timedelta(days=i) for i in range(len(bp_data))]
@@ -380,7 +392,8 @@ elif st.session_state.current_section == "diseases":
                 advice = llm.invoke(prompt)
             except:
                 advice = "AI is currently unavailable for advice."
-            st.markdown(f"🤖 **AI Advice:**\n{advice}")
+            st.markdown(f"🤖 **AI Advice:**
+{advice}")
         if "asthma_log" in st.session_state and len(st.session_state.asthma_log) > 0:
             asthma_df = pd.DataFrame(st.session_state.asthma_log)
             asthma_df["Date"] = [datetime.now() - timedelta(days=i) for i in range(len(asthma_df))]
