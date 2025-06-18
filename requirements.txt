@@ -1,10 +1,7 @@
-streamlit==1.46.0
-langchain-ibm
-ibm-watsonx-ai
-pandas==2.2.2
-numpy==1.26.4
-langchain
 ibm_watson_machine_learning
+ibm-watsonx-ai
+langchain
+langchain-ibm
 pandas
 numpy
 chromadb
