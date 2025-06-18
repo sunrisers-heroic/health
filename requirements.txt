@@ -3,7 +3,7 @@ langchain
 langchain-ibm
 ibm-watsonx-ai
 ibm_watson_machine_learning
-pandas
+pandas==2.0.3
 numpy
 chromadb
 tiktoken
