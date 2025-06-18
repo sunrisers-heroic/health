@@ -5,7 +5,7 @@ import pandas as pd
 import random
 from datetime import datetime, timedelta
 
-# Page config
+# Page config 
 st.set_page_config(page_title="🩺 Health Assistant", layout="wide", page_icon="🩺")
 
 # Custom CSS for animated UI and green/blue theme
