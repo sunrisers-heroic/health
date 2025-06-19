@@ -2,6 +2,6 @@ ibm_watson_machine_learning
 ibm-watsonx-ai
 langchain
 langchain-ibm
-
+fpdf
 
 
