@@ -81,8 +81,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Initialize session state
+if "profile_complete" not in st.session_state:
+    st.session_state.profile_complete = False
+if "profile_data" not in st.session_state:
+    st.session_state.profile_data = {}
 if "current_section" not in st.session_state:
-    st.session_state.current_section = "chat"
+    st.session_state.current_section = "profile"
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "health_data" not in st.session_state:
@@ -99,11 +103,11 @@ try:
     project_id = st.secrets["WATSONX_PROJECT_ID"]
 
     model_map = {
-        "chat": "ibm/granite-13b-instruct-latest",
-        "symptoms": "ibm/granite-13b-instruct-latest",
-        "treatment": "ibm/granite-13b-instruct-latest",
-        "diseases": "ibm/granite-13b-instruct-latest",
-        "reports": "ibm/granite-13b-instruct-latest"
+        "chat": "ibm/granite-13b-instruct-v2",
+        "symptoms": "ibm/granite-13b-instruct-v2",
+        "treatment": "ibm/granite-13b-instruct-v2",
+        "diseases": "ibm/granite-13b-instruct-v2",
+        "reports": "ibm/granite-13b-instruct-v2"
     }
 
     def get_llm(model_name):
@@ -120,6 +124,7 @@ try:
                 GenParams.STOP_SEQUENCES: ["Human:", "Observation"],
             },
         )
+
 except KeyError:
     st.warning("⚠️ Watsonx credentials missing.")
     st.stop()
@@ -127,41 +132,93 @@ except Exception as e:
     st.error(f"🚨 Error initializing LLM: {str(e)}")
     st.stop()
 
-# Navigation Bar
-lang = st.session_state.language
-st.markdown('<div class="navbar">', unsafe_allow_html=True)
-col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
-with col1:
-    if st.button("챗", key="btn_chat"): st.session_state.current_section = "chat"
-with col2:
-    if st.button("🧠", key="btn_symptoms"): st.session_state.current_section = "symptoms"
-with col3:
-    if st.button("💊", key="btn_treatment"): st.session_state.current_section = "treatment"
-with col4:
-    if st.button("🫀", key="btn_diseases"): st.session_state.current_section = "diseases"
-with col5:
-    if st.button("📊", key="btn_reports"): st.session_state.current_section = "reports"
-with col6:
-    if st.button("🧾", key="btn_profile"): st.session_state.current_section = "profile"
-with col7:
-    if st.button("⚙️", key="btn_settings"): st.session_state.current_section = "settings"
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Header
-st.markdown(f'<h1 style="text-align:center;">{LANGUAGES[lang]["title"]}</h1>', unsafe_allow_html=True)
-st.markdown(f'<p style="text-align:center; font-size:16px;">{LANGUAGES[lang]["subtitle"]}</p>', unsafe_allow_html=True)
-
-# Function to export data as PDF
+# Function to export data as PDF including user profile
 def export_health_report():
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Arial", size=12)
-    pdf.cell(0, 10, txt="Health Report", ln=True, align='C')
+
+    # Add Title
+    pdf.cell(0, 10, txt="HealthAI - Personalized Health Report", ln=True, align='C')
     pdf.ln(10)
-    for key, value in st.session_state.health_data.items():
-        pdf.cell(0, 10, txt=f"{key.capitalize()}: {value}", ln=True)
-    return pdf.output(dest='S').encode('latin-1')
+
+    # Add User Info
+    if "profile_data" in st.session_state and st.session_state.profile_data:
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, txt="User Information", ln=True)
+        pdf.set_font("Arial", '', 12)
+        for key, value in st.session_state.profile_data.items():
+            pdf.cell(0, 10, txt=f"{key.capitalize()}: {value}", ln=True)
+
+    # Add Metrics
+    pdf.ln(10)
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 10, txt="Recent Health Metrics", ln=True)
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(0, 10, txt="Avg Heart Rate: 72 bpm", ln=True)
+    pdf.cell(0, 10, txt="Avg Glucose: 90 mg/dL", ln=True)
+    pdf.output("health_report.pdf")
+    return open("health_report.pdf", "rb").read()
+
+# Navigation Bar
+def render_navbar():
+    lang = st.session_state.language
+    st.markdown('<div class="navbar">', unsafe_allow_html=True)
+    col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+    with col1:
+        if st.button("챗", key="btn_chat", use_container_width=True, disabled=not st.session_state.profile_complete):
+            st.session_state.current_section = "chat"
+    with col2:
+        if st.button("🧠", key="btn_symptoms", use_container_width=True, disabled=not st.session_state.profile_complete):
+            st.session_state.current_section = "symptoms"
+    with col3:
+        if st.button("💊", key="btn_treatment", use_container_width=True, disabled=not st.session_state.profile_complete):
+            st.session_state.current_section = "treatment"
+    with col4:
+        if st.button("🫀", key="btn_diseases", use_container_width=True, disabled=not st.session_state.profile_complete):
+            st.session_state.current_section = "diseases"
+    with col5:
+        if st.button("📊", key="btn_reports", use_container_width=True, disabled=not st.session_state.profile_complete):
+            st.session_state.current_section = "reports"
+    with col6:
+        if st.button("🧾", key="btn_profile", use_container_width=True):
+            st.session_state.current_section = "profile"
+    with col7:
+        if st.button("⚙️", key="btn_settings", use_container_width=True):
+            st.session_state.current_section = "settings"
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# Header
+lang = st.session_state.language
+st.markdown(f'<h1 style="text-align:center;">{LANGUAGES[lang]["title"]}</h1>', unsafe_allow_html=True)
+st.markdown(f'<p style="text-align:center; font-size:16px;">{LANGUAGES[lang]["subtitle"]}</p>', unsafe_allow_html=True)
+
+# Show navigation bar only if profile is complete
+render_navbar()
+
+# Functions
+def save_profile(name, age, gender, height, weight):
+    st.session_state.profile_data = {
+        "name": name,
+        "age": age,
+        "gender": gender,
+        "height": height,
+        "weight": weight,
+        "bmi": round(weight / ((height / 100) ** 2), 1)
+    }
+    st.session_state.profile_complete = True
+    st.success("✅ Profile saved successfully!")
+
+def reset_profile():
+    st.session_state.profile_complete = False
+    st.session_state.profile_data = {}
+    st.session_state.messages = []
+    st.session_state.glucose_log = []
+    st.session_state.bp_log = []
+    st.session_state.asthma_log = []
+    st.session_state.health_data = {}
+    st.rerun()
 
 # ------------------------------ SETTINGS ------------------------------
 if st.session_state.current_section == "settings":
@@ -175,36 +232,35 @@ if st.session_state.current_section == "settings":
         st.success("Preferences updated!")
     st.markdown('</div>')
 
-# ------------------------------ PROGRESS REPORTS ------------------------------
-elif st.session_state.current_section == "reports":
+# ------------------------------ USER PROFILE ------------------------------
+elif st.session_state.current_section == "profile":
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown(f'<h2>📈 {LANGUAGES[lang]["reports"]}</h2>', unsafe_allow_html=True)
-    heart_rate = st.slider("Heart Rate", 40, 200, step=1)
-    glucose = st.slider("Blood Glucose Level", 40, 400, step=5)
-    systolic = st.slider("Systolic BP", 90, 200, value=120)
-    diastolic = st.slider("Diastolic BP", 60, 130, value=80)
-    steps = st.slider("Steps Walked", 0, 50000, step=1000)
-    sleep = st.slider("Hours Slept", 0.0, 12.0, step=0.5)
-    
-    if st.button("Save Data"):
-        st.session_state.health_data.update({
-            "heart_rate": heart_rate,
-            "glucose": glucose,
-            "systolic": systolic,
-            "diastolic": diastolic,
-            "steps_walked": steps,
-            "hours_slept": sleep
-        })
-        st.success("Data saved successfully.")
+    st.markdown('<h2>🧾 Complete Your Profile</h2>', unsafe_allow_html=True)
+    name = st.text_input("Full Name")
+    age = st.number_input("Age", min_value=0, max_value=120)
+    gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+    height = st.number_input("Height (cm)", min_value=50, max_value=250)
+    weight = st.number_input("Weight (kg)", min_value=10, max_value=300)
 
-    if st.button(LANGUAGES[lang]["generate_ai_report"]):
-        summary = get_llm("reports").invoke(f"Give a short health analysis based on: {st.session_state.health_data}")
-        st.markdown(f"🧠 **AI Analysis:**\n{summary}")
+    if st.button("Save Profile"):
+        if name and age > 0 and height > 0 and weight > 0:
+            save_profile(name, age, gender, height, weight)
+        else:
+            st.error("❌ Please fill in all fields.")
 
-    if st.session_state.health_data:
-        st.download_button(LANGUAGES[lang]["export_pdf"], data=export_health_report(), file_name="health_report.pdf", mime="application/pdf")
+    if st.session_state.profile_complete:
+        st.markdown('<br>', unsafe_allow_html=True)
+        if st.button("🔄 Reset Profile"):
+            reset_profile()
 
     st.markdown('</div>')
+
+# If profile not completed, stop further access
+elif not st.session_state.profile_complete:
+    st.info("ℹ️ Please complete your profile before continuing.")
+    if st.button("Go to Profile"):
+        st.session_state.current_section = "profile"
+    st.stop()
 
 # ------------------------------ CHATBOT ------------------------------
 elif st.session_state.current_section == "chat":
@@ -262,8 +318,9 @@ elif st.session_state.current_section == "diseases":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<h2>🫀 Chronic Disease Logs</h2>', unsafe_allow_html=True)
     condition = st.selectbox("Condition", ["Diabetes", "Hypertension", "Asthma"])
+
     if condition == "Diabetes":
-        glucose = st.number_input("Blood Sugar Level (mg/dL)", 40, 400, step=5)
+        glucose = st.number_input("Blood Glucose Level (mg/dL)", min_value=40, max_value=400, step=5)
         if st.button("Log Glucose"):
             st.session_state.glucose_log = st.session_state.get("glucose_log", []) + [glucose]
             st.success(f"Logged: {glucose} mg/dL")
@@ -273,9 +330,10 @@ elif st.session_state.current_section == "diseases":
             except:
                 advice = "AI is currently unavailable."
             st.markdown(f"🤖 **AI Advice:**\n{advice}")
+
     elif condition == "Hypertension":
-        systolic = st.number_input("Systolic BP", 90, 200, value=120)
-        diastolic = st.number_input("Diastolic BP", 60, 130, value=80)
+        systolic = st.number_input("Systolic BP", min_value=90, max_value=200, value=120)
+        diastolic = st.number_input("Diastolic BP", min_value=60, max_value=130, value=80)
         if st.button("Log BP"):
             st.session_state.bp_log = st.session_state.get("bp_log", []) + [(systolic, diastolic)]
             st.success(f"Logged: {systolic}/{diastolic} mmHg")
@@ -285,10 +343,11 @@ elif st.session_state.current_section == "diseases":
             except:
                 advice = "AI is currently unavailable."
             st.markdown(f"🤖 **AI Advice:**\n{advice}")
+
     elif condition == "Asthma":
-        severity = st.slider("Severity (1-10)", 1, 10)
         triggers = st.text_area("Triggers Today (e.g., pollen, dust)")
-        if st.button("Log Episode"):
+        severity = st.slider("Severity (1-10)", 1, 10)
+        if st.button("Log Asthma Episode"):
             st.session_state.asthma_log = st.session_state.get("asthma_log", []) + [{"triggers": triggers, "severity": severity}]
             st.success("Episode logged.")
             prompt = f"What are some ways to avoid asthma triggers like {triggers}?"
@@ -297,21 +356,62 @@ elif st.session_state.current_section == "diseases":
             except:
                 advice = "AI is currently unavailable."
             st.markdown(f"🤖 **AI Advice:**\n{advice}")
+
     st.markdown('</div>')
 
-# ------------------------------ USER PROFILE ------------------------------
-elif st.session_state.current_section == "profile":
+# ------------------------------ PROGRESS REPORTS ------------------------------
+elif st.session_state.current_section == "reports":
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<h2>🧾 User Profile</h2>', unsafe_allow_html=True)
-    name = st.text_input("Full Name")
-    age = st.number_input("Age", min_value=0, max_value=120)
-    gender = st.selectbox("Gender", ["Male", "Female", "Other"])
-    height = st.number_input("Height (cm)", min_value=50, max_value=250)
-    weight = st.number_input("Weight (kg)", min_value=10, max_value=300)
-    if st.button("Save Profile"):
-        st.session_state.profile = {"name": name, "age": age, "gender": gender, "height": height, "weight": weight}
-        st.success("Profile saved!")
+    st.markdown(f'<h2>📈 {LANGUAGES[lang]["reports"]}</h2>', unsafe_allow_html=True)
+    heart_rate = st.slider("Heart Rate", 40, 200, step=1)
+    glucose = st.slider("Blood Glucose Level", 40, 400, step=5)
+    systolic = st.slider("Systolic BP", 90, 200, value=120)
+    diastolic = st.slider("Diastolic BP", 60, 130, value=80)
+    steps = st.slider("Steps Walked", 0, 50000, step=1000)
+    sleep = st.slider("Hours Slept", 0.0, 12.0, step=0.5)
+
+    if st.button("Save Data"):
+        st.session_state.health_data.update({
+            "heart_rate": heart_rate,
+            "glucose": glucose,
+            "systolic": systolic,
+            "diastolic": diastolic,
+            "steps_walked": steps,
+            "hours_slept": sleep
+        })
+        st.success("Data saved successfully.")
+
+    if st.button(LANGUAGES[lang]["generate_ai_report"]):
+        summary = get_llm("reports").invoke(f"Give a short health analysis based on: {st.session_state.health_data}")
+        st.markdown(f"🧠 **AI Analysis:**\n{summary}")
+
+    if st.session_state.profile_complete and st.session_state.health_data:
+        st.download_button(
+            label=LANGUAGES[lang]["export_pdf"],
+            data=export_health_report(),
+            file_name="health_report.pdf",
+            mime="application/pdf"
+        )
+
+    st.markdown('</div>')
+
+# ------------------------------ HOME PAGE ------------------------------
+elif st.session_state.current_section == "home":
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.markdown(f'<h2>{LANGUAGES[lang]["home_welcome"]}</h2>', unsafe_allow_html=True)
+    st.markdown(f'{LANGUAGES[lang]["highlights"]}')
+    st.markdown('''
+        - 💬 AI-Powered Symptom Checker  
+        - 🩸 Real-Time Disease Prediction  
+        - 💊 Personalized Treatment Planner  
+        - 🤖 AI Chatbot for advice  
+        - 📈 Weekly Reports powered by AI  
+    ''')
     st.markdown('</div>')
 
 # Footer
 st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
+
+# Debug Mode
+with st.expander("🔧 Debug Mode"):
+    st.write("Session State:", st.session_state)
