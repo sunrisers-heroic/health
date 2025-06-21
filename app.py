@@ -673,7 +673,7 @@ elif st.session_state.current_section == "reports":
         </div>
         """, unsafe_allow_html=True)
 
-    # Generate AI Insights
+       # Generate AI Insights
    if st.button("🧠 Generate Enhanced AI Report Summary"):
     # Build context from analytics data
     recent_hr = ', '.join(map(str, heart_rates[-7:]))
