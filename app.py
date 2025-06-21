@@ -792,7 +792,6 @@ Patient Profile: {json.dumps(st.session_state.profile_data)}
 
 
 
-
 elif st.session_state.current_section == "reports":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<h2>📈 Health Analytics Dashboard</h2>', unsafe_allow_html=True)
@@ -802,7 +801,6 @@ elif st.session_state.current_section == "reports":
     # --------------------------
     st.markdown("### 📝 Log Multiple Metrics at Once")
     
-    # Range type selection
     range_type = st.selectbox("Select Range Type", ["By Day", "By Week", "By Month"])
 
     if range_type == "By Day":
@@ -814,7 +812,7 @@ elif st.session_state.current_section == "reports":
         else:
             st.warning("⚠️ Please select both start and end dates.")
             st.markdown('</div>')
-            continue
+            # Removed invalid 'continue' here
 
     elif range_type == "By Week":
         start_week = st.date_input("Start of Week", value=datetime.today())
@@ -828,8 +826,20 @@ elif st.session_state.current_section == "reports":
     elif range_type == "By Month":
         year = st.number_input("Year", min_value=2000, max_value=2100, value=datetime.now().year)
         month = st.slider("Month", 1, 12, value=datetime.now().month)
-        days_in_month = (datetime(year, month % 12 + 1, 1) - timedelta(days=1)).day if month < 12 else 31
-        dates_to_add = [f"{year}-{str(month).zfill(2)}-{str(day).zfill(2)}" for day in range(1, days_in_month + 1)]
+        try:
+            # Get number of days in selected month
+            if month == 12:
+                next_month = 1
+                next_year = year + 1
+            else:
+                next_month = month + 1
+                next_year = year
+            first_day_next_month = datetime(next_year, next_month, 1)
+            last_day_of_month = (first_day_next_month - timedelta(days=1)).day
+            dates_to_add = [f"{year}-{str(month).zfill(2)}-{str(day).zfill(2)}" for day in range(1, last_day_of_month + 1)]
+        except Exception as e:
+            st.error(f"🚨 Error calculating month: {str(e)}")
+            dates_to_add = []
 
     # Create editable dataframe-like input
     default_data = pd.DataFrame({
@@ -1009,7 +1019,6 @@ Remember: Keep everything conversational and easy to understand.
         )
 
     st.markdown('</div>')
-
 
     
     
