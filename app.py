@@ -294,12 +294,37 @@ elif st.session_state.current_section == "chat":
 # ------------------------------ SYMPTOM CHECKER ------------------------------
 elif st.session_state.current_section == "symptoms":
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<h2>🧠 Symptom Checker</h2>', unsafe_allow_html=True)
-    query = st.text_area("Describe your symptoms or ask a question:")
-    if st.button("Get Advice"):
-        llm = get_llm("symptoms")
-        res = llm.invoke(query)
-        st.markdown(f"🧠 **AI Response:**\n{res}")
+    st.markdown('<h2>🧠 Symptom Checker (Disease Identifier)</h2>', unsafe_allow_html=True)
+
+    symptom_description = st.text_area(
+        "Describe your symptoms (e.g., headache, fever, fatigue):",
+        placeholder="Example: 'I have chest pain, shortness of breath, and feel dizzy.'"
+    )
+
+    if st.button("Check Symptoms"):
+        if symptom_description.strip() == "":
+            st.warning("⚠️ Please describe your symptoms.")
+        else:
+            # Build prompt to ask for possible conditions
+            prompt = f"""
+You are a medical AI. Based on the following symptoms, list the most likely conditions or diseases from most to least probable.
+
+Symptoms: {symptom_description}
+
+Provide only the list of possible conditions with brief explanations. Do not include disclaimers or advice like 'consult a doctor'. Keep it concise and clear.
+"""
+
+            try:
+                llm = get_llm("symptoms")
+                response = llm.invoke(prompt).strip()
+
+                if not response or response.lower() in ["online", "none", "no result"]:
+                    st.error("🚨 Could not retrieve valid diagnosis from AI. Try again later.")
+                else:
+                    st.markdown(f"🩺 **Possible Conditions:**\n\n{response}")
+            except Exception as e:
+                st.error(f"🚨 Error getting diagnosis: {str(e)}")
+
     st.markdown('</div>')
 
 # ------------------------------ TREATMENT PLANNER ------------------------------
