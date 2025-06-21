@@ -4,7 +4,7 @@
 import streamlit as st
 from langchain_ibm import WatsonxLLM
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
-from datetime import datetime
+from datetime import datetime, timedelta
 from fpdf import FPDF
 import json
 import os
