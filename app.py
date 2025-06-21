@@ -502,56 +502,119 @@ Include:
 # ------------------------------ DISEASE MANAGEMENT ------------------------------
 elif st.session_state.current_section == "diseases":
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<h2>🫀 Chronic Disease Logs</h2>', unsafe_allow_html=True)
-    
-    condition = st.selectbox("Condition", ["Diabetes", "Hypertension", "Asthma"])
-    
-    if condition == "Diabetes":
-        glucose = st.number_input("Blood Glucose Level (mg/dL)", min_value=40, max_value=400, step=5)
-        if st.button("Log Glucose"):
-            st.session_state.glucose_log.append(glucose)
-            st.success(f"Logged: {glucose} mg/dL")
+    st.markdown('<h2>🫀 Chronic Disease Management</h2>', unsafe_allow_html=True)
+
+    # Condition selector
+    condition = st.selectbox("Select Chronic Condition", ["Diabetes", "Hypertension", "Asthma"])
+
+    # Tabs for logging and history
+    tab1, tab2 = st.tabs(["➕ Log New Entry", "📊 View Trends"])
+
+    with tab1:
+        if condition == "Diabetes":
+            col1, col2 = st.columns(2)
+            with col1:
+                glucose = st.number_input("Blood Glucose Level (mg/dL)", min_value=40, max_value=400, step=5, key="glucose")
+            with col2:
+                glucose_date = st.date_input("Date of Measurement", value=datetime.today(), key="glucose_date")
+
+            if st.button("✅ Log Glucose Reading"):
+                st.session_state.glucose_log.append({
+                    "value": glucose,
+                    "date": glucose_date.strftime("%Y-%m-%d")
+                })
+                st.success(f"✅ Logged: {glucose} mg/dL on {glucose_date.strftime('%Y-%m-%d')}")
+
+                # Generate AI Advice
+                prompt = f"""
+My blood sugar is {glucose} mg/dL. Is this normal? What should I do next?
+Patient Profile: {json.dumps(st.session_state.profile_data)}
+"""
+                try:
+                    llm = get_llm("diseases")
+                    advice = llm.invoke(prompt).strip()
+                except Exception as e:
+                    advice = "🤖 AI advice unavailable at the moment."
+                st.markdown(f"🧠 **AI Health Advice:**\n\n{advice}")
+
+        elif condition == "Hypertension":
+            col1, col2 = st.columns(2)
+            with col1:
+                systolic = st.number_input("Systolic BP", min_value=90, max_value=200, value=120, key="sys")
+                sys_date = st.date_input("Measurement Date", value=datetime.today(), key="sys_date")
+            with col2:
+                diastolic = st.number_input("Diastolic BP", min_value=60, max_value=130, value=80, key="dia")
             
-            # Generate AI advice
-            prompt = f"My blood sugar is {glucose}. Is it normal? What should I do?"
-            try:
-                advice = get_llm("diseases").invoke(prompt)
-            except:
-                advice = "AI is currently unavailable."
-            st.markdown(f"🤖 **AI Advice:**\n\n{advice}")
-            
-    elif condition == "Hypertension":
-        systolic = st.number_input("Systolic BP", min_value=90, max_value=200, value=120)
-        diastolic = st.number_input("Diastolic BP", min_value=60, max_value=130, value=80)
-        
-        if st.button("Log BP"):
-            st.session_state.bp_log.append((systolic, diastolic))
-            st.success(f"Logged: {systolic}/{diastolic} mmHg")
-            
-            # Generate AI advice
-            prompt = f"My blood pressure is {systolic}/{diastolic} mmHg. What does that mean?"
-            try:
-                advice = get_llm("diseases").invoke(prompt)
-            except:
-                advice = "AI is currently unavailable."
-            st.markdown(f"🤖 **AI Advice:**\n\n{advice}")
-            
-    elif condition == "Asthma":
-        triggers = st.text_area("Triggers Today (e.g., pollen, dust)")
-        severity = st.slider("Severity (1-10)", 1, 10)
-        
-        if st.button("Log Asthma Episode"):
-            st.session_state.asthma_log.append({"triggers": triggers, "severity": severity})
-            st.success("Episode logged.")
-            
-            # Generate AI advice
-            prompt = f"What are some ways to avoid asthma triggers like {triggers}?"
-            try:
-                advice = get_llm("diseases").invoke(prompt)
-            except:
-                advice = "AI is currently unavailable."
-            st.markdown(f"🤖 **AI Advice:**\n\n{advice}")
-    
+            if st.button("✅ Log Blood Pressure"):
+                st.session_state.bp_log.append({
+                    "systolic": systolic,
+                    "diastolic": diastolic,
+                    "date": sys_date.strftime("%Y-%m-%d")
+                })
+                st.success(f"✅ Logged: {systolic}/{diastolic} mmHg on {sys_date.strftime('%Y-%m-%d')}")
+
+                prompt = f"""
+My blood pressure is {systolic}/{diastolic} mmHg. What does that mean?
+Patient Profile: {json.dumps(st.session_state.profile_data)}
+"""
+                try:
+                    llm = get_llm("diseases")
+                    advice = llm.invoke(prompt).strip()
+                except Exception as e:
+                    advice = "🤖 AI advice unavailable at the moment."
+                st.markdown(f"🧠 **AI Health Advice:**\n\n{advice}")
+
+        elif condition == "Asthma":
+            triggers = st.text_area("Triggers Today (e.g., pollen, dust, exercise)")
+            severity = st.slider("Severity (1-10)", 1, 10, key="severity_slider")
+            episode_date = st.date_input("Date of Episode", value=datetime.today(), key="asthma_date")
+
+            if st.button("✅ Log Asthma Episode"):
+                st.session_state.asthma_log.append({
+                    "triggers": triggers,
+                    "severity": severity,
+                    "date": episode_date.strftime("%Y-%m-%d")
+                })
+                st.success(f"✅ Episode logged on {episode_date.strftime('%Y-%m-%d')}")
+
+                prompt = f"""
+What are some ways to avoid asthma triggers like '{triggers}'?
+Also, how can I manage severity level {severity} episodes?
+Patient Profile: {json.dumps(st.session_state.profile_data)}
+"""
+                try:
+                    llm = get_llm("diseases")
+                    advice = llm.invoke(prompt).strip()
+                except Exception as e:
+                    advice = "🤖 AI advice unavailable at the moment."
+                st.markdown(f"🧠 **AI Health Advice:**\n\n{advice}")
+
+    with tab2:
+        st.markdown("### 📈 Historical Data Visualization")
+
+        if condition == "Diabetes" and st.session_state.glucose_log:
+            df_gluc = pd.DataFrame(st.session_state.glucose_log)
+            fig = px.line(df_gluc, x='date', y='value', title='Glucose Levels Over Time')
+            fig.update_layout(yaxis_title="Glucose (mg/dL)", xaxis_title="Date")
+            st.plotly_chart(fig, use_container_width=True)
+
+        elif condition == "Hypertension" and st.session_state.bp_log:
+            df_bp = pd.DataFrame(st.session_state.bp_log)
+            df_bp['bp_str'] = df_bp['systolic'].astype(str) + "/" + df_bp['diastolic'].astype(str)
+            fig = px.line(df_bp, x='date', y='systolic', title='Systolic Blood Pressure Trend')
+            st.plotly_chart(fig, use_container_width=True)
+
+            fig2 = px.line(df_bp, x='date', y='diastolic', title='Diastolic Blood Pressure Trend')
+            st.plotly_chart(fig2, use_container_width=True)
+
+        elif condition == "Asthma" and st.session_state.asthma_log:
+            df_asthma = pd.DataFrame(st.session_state.asthma_log)
+            fig = px.bar(df_asthma, x='date', y='severity', color='triggers', title='Asthma Severity by Trigger')
+            st.plotly_chart(fig, use_container_width=True)
+
+        else:
+            st.info("ℹ️ No historical data available yet.")
+
     st.markdown('</div>')
 
 # ------------------------------ PROGRESS REPORTS ------------------------------
