@@ -798,25 +798,46 @@ elif st.session_state.current_section == "reports":
     st.markdown('<h2>📈 Health Analytics Dashboard</h2>', unsafe_allow_html=True)
 
     # --------------------------
-    # Manual Data Input Section
+    # Manual Bulk Data Input Section
     # --------------------------
-    st.markdown("### 📝 Log New Health Metrics")
-    col_input1, col_input2, col_input3 = st.columns(3)
-    with col_input1:
-        new_date = st.date_input("Select Date", value=datetime.today())
-    with col_input2:
-        new_hr = st.number_input("Heart Rate (bpm)", min_value=40, max_value=140, step=1, key="new_hr")
-    with col_input3:
-        new_glucose = st.number_input("Blood Glucose (mg/dL)", min_value=50, max_value=200, step=1, key="new_glucose")
+    st.markdown("### 📝 Log Multiple Health Metrics at Once")
+    date_range = st.date_input("Select Date Range", value=(datetime.today(), datetime.today()))
+    
+    if len(date_range) == 2:
+        start_date, end_date = date_range
+        delta = (end_date - start_date).days + 1
+        dates_to_add = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(delta)]
+        
+        st.markdown(f"📅 You've selected {delta} day(s): from **{start_date.strftime('%Y-%m-%d')}** to **{end_date.strftime('%Y-%m-%d')}**")
 
-    if st.button("➕ Add Metric"):
-        if new_hr > 0 and new_glucose > 0:
-            st.session_state.analytics_data["dates"].append(new_date.strftime("%Y-%m-%d"))
-            st.session_state.analytics_data["heart_rates"].append(new_hr)
-            st.session_state.analytics_data["glucose_levels"].append(new_glucose)
-            st.success("✅ Metric added successfully!")
-        else:
-            st.warning("⚠️ Please enter valid values for both metrics.")
+        # Create editable dataframe-like input
+        default_data = pd.DataFrame({
+            'Date': dates_to_add,
+            'Heart Rate (bpm)': [''] * delta,
+            'Blood Glucose (mg/dL)': [''] * delta
+        })
+
+        edited_df = st.data_editor(default_data, use_container_width=True, num_rows="dynamic")
+
+        if st.button("➕ Add Bulk Metrics"):
+            success_count = 0
+            for index, row in edited_df.iterrows():
+                try:
+                    hr = int(row['Heart Rate (bpm)']) if not pd.isna(row['Heart Rate (bpm)']) else None
+                    gluc = int(row['Blood Glucose (mg/dL)']) if not pd.isna(row['Blood Glucose (mg/dL)']) else None
+                    date = row['Date']
+                    
+                    if hr is not None and gluc is not None and 40 <= hr <= 140 and 50 <= gluc <= 200:
+                        st.session_state.analytics_data["dates"].append(date)
+                        st.session_state.analytics_data["heart_rates"].append(hr)
+                        st.session_state.analytics_data["glucose_levels"].append(gluc)
+                        success_count += 1
+                    else:
+                        st.warning(f"⚠️ Invalid values found on row {index+1}. Please enter valid Heart Rate (40–140 bpm) and Glucose (50–200 mg/dL).")
+            if success_count > 0:
+                st.success(f"✅ Successfully added {success_count} metric(s)!")
+    else:
+        st.warning("⚠️ Please select a valid date range.")
 
     # --------------------------
     # Visualization & Analytics
@@ -970,6 +991,8 @@ Remember: Keep everything conversational and easy to understand.
             file_name="health_report.pdf",
             mime="application/pdf"
         )
+
+    st.markdown('Thanks')
 
 
 
