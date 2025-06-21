@@ -250,17 +250,45 @@ def reset_profile():
     st.rerun()
 
 # ------------------------------ SETTINGS ------------------------------
-if st.session_state.current_section == "settings":
+elif st.session_state.current_section == "settings":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown(f'<h2>⚙️ {LANGUAGES[lang]["settings"]}</h2>', unsafe_allow_html=True)
-    language = st.selectbox("Language", options=["en", "es", "fr"], format_func=lambda x: {"en": "English", "es": "Español", "fr": "Français"}[x])
-    theme = st.selectbox("Theme", ["Light"])
-    font_size = st.slider("Font Size", 12, 24)
-    if st.button(LANGUAGES[lang]["save_profile"]):
-        st.session_state.language = language
-        st.success("Preferences updated!")
-    st.markdown('</div>')
 
+    st.markdown("### 🌍 Language & Localization")
+    language = st.selectbox(
+        "Select Language",
+        options=["en", "es", "fr"],
+        format_func=lambda x: {"en": "English 🇬🇧", "es": "Español 🇪🇸", "fr": "Français 🇫🇷"}[x],
+        help="Choose the display language for the app interface."
+    )
+
+    st.markdown("### 🎨 Theme Preferences")
+    theme = st.selectbox(
+        "Color Theme",
+        ["Light"],
+        disabled=True,
+        help="Currently only Light theme is available. More themes coming soon!"
+    )
+
+    st.markdown("### 🔤 Text Display")
+    font_size = st.slider(
+        "Font Size (px)",
+        min_value=12,
+        max_value=24,
+        value=16,
+        step=1,
+        help="Adjust the base font size for easier reading."
+    )
+
+    # Save Button
+    if st.button("💾 Save Preferences"):
+        st.session_state.language = language
+        st.session_state.font_size = font_size
+        st.success("✅ Your preferences have been saved successfully!")
+
+    st.markdown("#### Tip: Changes apply immediately to the app interface.")
+
+    st.markdown('</div>')
 # ------------------------------ USER PROFILE ------------------------------
 elif st.session_state.current_section == "profile":
     st.markdown('<div class="card">', unsafe_allow_html=True)
