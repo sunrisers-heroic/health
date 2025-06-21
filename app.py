@@ -798,35 +798,57 @@ elif st.session_state.current_section == "reports":
     st.markdown('<h2>📈 Health Analytics Dashboard</h2>', unsafe_allow_html=True)
 
     # --------------------------
-    # Manual Bulk Data Input Section
+    # Bulk Metric Input Section
     # --------------------------
-    st.markdown("### 📝 Log Multiple Health Metrics at Once")
-    date_range = st.date_input("Select Date Range", value=(datetime.today(), datetime.today()))
+    st.markdown("### 📝 Log Multiple Metrics at Once")
     
-    if len(date_range) == 2:
-        start_date, end_date = date_range
-        delta = (end_date - start_date).days + 1
-        dates_to_add = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(delta)]
-        
-        st.markdown(f"📅 You've selected {delta} day(s): from **{start_date.strftime('%Y-%m-%d')}** to **{end_date.strftime('%Y-%m-%d')}**")
+    # Range type selection
+    range_type = st.selectbox("Select Range Type", ["By Day", "By Week", "By Month"])
 
-        # Create editable dataframe-like input
-        default_data = pd.DataFrame({
-            'Date': dates_to_add,
-            'Heart Rate (bpm)': [''] * delta,
-            'Blood Glucose (mg/dL)': [''] * delta
-        })
+    if range_type == "By Day":
+        date_range = st.date_input("Select Date Range", value=(datetime.today(), datetime.today()))
+        if len(date_range) == 2:
+            start_date, end_date = date_range
+            delta = (end_date - start_date).days + 1
+            dates_to_add = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(delta)]
+        else:
+            st.warning("⚠️ Please select both start and end dates.")
+            st.markdown('</div>')
+            continue
 
-        edited_df = st.data_editor(default_data, use_container_width=True, num_rows="dynamic")
+    elif range_type == "By Week":
+        start_week = st.date_input("Start of Week", value=datetime.today())
+        weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=1)
+        dates_to_add = []
+        for week in range(weeks):
+            base_date = start_week + timedelta(weeks=week)
+            for i in range(7):
+                dates_to_add.append((base_date + timedelta(days=i)).strftime("%Y-%m-%d"))
 
-        if st.button("➕ Add Bulk Metrics"):
-            success_count = 0
+    elif range_type == "By Month":
+        year = st.number_input("Year", min_value=2000, max_value=2100, value=datetime.now().year)
+        month = st.slider("Month", 1, 12, value=datetime.now().month)
+        days_in_month = (datetime(year, month % 12 + 1, 1) - timedelta(days=1)).day if month < 12 else 31
+        dates_to_add = [f"{year}-{str(month).zfill(2)}-{str(day).zfill(2)}" for day in range(1, days_in_month + 1)]
+
+    # Create editable dataframe-like input
+    default_data = pd.DataFrame({
+        'Date': dates_to_add,
+        'Heart Rate (bpm)': [''] * len(dates_to_add),
+        'Blood Glucose (mg/dL)': [''] * len(dates_to_add)
+    })
+
+    edited_df = st.data_editor(default_data, use_container_width=True, num_rows="dynamic")
+
+    if st.button("➕ Add Bulk Metrics"):
+        success_count = 0
+        try:
             for index, row in edited_df.iterrows():
                 try:
                     hr = int(row['Heart Rate (bpm)']) if not pd.isna(row['Heart Rate (bpm)']) else None
                     gluc = int(row['Blood Glucose (mg/dL)']) if not pd.isna(row['Blood Glucose (mg/dL)']) else None
                     date = row['Date']
-                    
+
                     if hr is not None and gluc is not None and 40 <= hr <= 140 and 50 <= gluc <= 200:
                         st.session_state.analytics_data["dates"].append(date)
                         st.session_state.analytics_data["heart_rates"].append(hr)
@@ -834,17 +856,19 @@ elif st.session_state.current_section == "reports":
                         success_count += 1
                     else:
                         st.warning(f"⚠️ Invalid values found on row {index+1}. Please enter valid Heart Rate (40–140 bpm) and Glucose (50–200 mg/dL).")
+                except Exception as e:
+                    st.warning(f"⚠️ Error processing row {index}: {str(e)}")
             if success_count > 0:
                 st.success(f"✅ Successfully added {success_count} metric(s)!")
-    else:
-        st.warning("⚠️ Please select a valid date range.")
+        except Exception as e:
+            st.error(f"🚨 An unexpected error occurred: {str(e)}")
 
     # --------------------------
     # Visualization & Analytics
     # --------------------------
-    dates = st.session_state.analytics_data["dates"]
-    heart_rates = st.session_state.analytics_data["heart_rates"]
-    glucose_levels = st.session_state.analytics_data["glucose_levels"]
+    dates = st.session_state.analytics_data.get("dates", [])
+    heart_rates = st.session_state.analytics_data.get("heart_rates", [])
+    glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
 
     df = pd.DataFrame({
         'Date': dates,
@@ -941,14 +965,11 @@ elif st.session_state.current_section == "reports":
 
         prompt = f"""
 You are a professional healthcare AI assistant tasked with providing a personalized health summary based on collected metrics.
-
 Patient Profile:
 {profile_info}
-
 Recent Metrics:
 Heart Rate (bpm): [{recent_hr}]
 Blood Glucose (mg/dL): [{recent_glucose}]
-
 Instructions:
 1. Analyze trends over time and note if values are increasing, decreasing, or stable.
 2. Interpret what these trends may mean in terms of health implications.
@@ -956,21 +977,16 @@ Instructions:
 4. Suggest practical lifestyle changes (e.g., diet, exercise).
 5. Mention when a medical checkup is recommended.
 6. Format output using bullet points and short paragraphs.
-
 Output format:
 ### 🔍 Trend Overview
 - Heart Rate: [Stable/Increasing/Decreasing]
 - Blood Glucose: [Stable/Increasing/Decreasing]
-
 ### 🩺 Health Implications
 Explain what the trend might indicate about the patient's current condition.
-
 ### 💡 Recommendations
 Provide 2-3 lifestyle suggestions tailored to the patient's data.
-
 ### ⚠️ Important Notes
 Include any warnings or reminders about consulting a doctor.
-
 Remember: Keep everything conversational and easy to understand.
 """
 
@@ -992,8 +1008,7 @@ Remember: Keep everything conversational and easy to understand.
             mime="application/pdf"
         )
 
-    st.markdown('Thanks')
-
+    st.markdown('</div>')
 
 
     
