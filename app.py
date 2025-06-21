@@ -560,16 +560,16 @@ elif st.session_state.current_section == "reports":
     st.markdown('<h2>📈 Health Analytics Dashboard</h2>', unsafe_allow_html=True)
 
     # --------------------------
-    # New: Manual Data Input Section
+    # Manual Data Input Section
     # --------------------------
     st.markdown("### 📝 Log New Health Metrics")
     col_input1, col_input2, col_input3 = st.columns(3)
     with col_input1:
         new_date = st.date_input("Select Date", value=datetime.today())
     with col_input2:
-        new_hr = st.number_input("Heart Rate (bpm)", min_value=40, max_value=140, step=1)
+        new_hr = st.number_input("Heart Rate (bpm)", min_value=40, max_value=140, step=1, key="new_hr")
     with col_input3:
-        new_glucose = st.number_input("Blood Glucose (mg/dL)", min_value=50, max_value=200, step=1)
+        new_glucose = st.number_input("Blood Glucose (mg/dL)", min_value=50, max_value=200, step=1, key="new_glucose")
 
     if st.button("➕ Add Metric"):
         if new_hr > 0 and new_glucose > 0:
@@ -581,7 +581,7 @@ elif st.session_state.current_section == "reports":
             st.warning("⚠️ Please enter valid values for both metrics.")
 
     # --------------------------
-    # Existing Visualization Code (unchanged)
+    # Visualization & Analytics
     # --------------------------
     dates = st.session_state.analytics_data["dates"]
     heart_rates = st.session_state.analytics_data["heart_rates"]
@@ -605,7 +605,7 @@ elif st.session_state.current_section == "reports":
     fig_glucose.update_layout(yaxis_range=[50, 200], template="plotly_white")
     st.plotly_chart(fig_glucose, use_container_width=True)
 
-    # BMI Metric
+    # BMI Display
     if st.session_state.profile_data.get('bmi'):
         bmi = st.session_state.profile_data['bmi']
         st.markdown(f"### 📏 BMI: {bmi} kg/m²")
@@ -618,9 +618,8 @@ elif st.session_state.current_section == "reports":
         else:
             st.error("Obese")
 
-    # Metric summary with trend indicators
+    # Latest Metrics
     col1, col2 = st.columns(2)
-
     with col1:
         st.markdown("### 📊 Latest Metrics")
         latest_date = dates[-1] if len(dates) > 0 else "N/A"
@@ -634,6 +633,7 @@ elif st.session_state.current_section == "reports":
         </div>
         """, unsafe_allow_html=True)
 
+    # Trend Analysis
     with col2:
         st.markdown("### 📈 Trend Analysis")
         hr_trend = "↑" if len(heart_rates) > 1 and heart_rates[-1] > heart_rates[-2] else "↓" if len(heart_rates) > 1 else "-"
@@ -648,7 +648,7 @@ elif st.session_state.current_section == "reports":
         </div>
         """, unsafe_allow_html=True)
 
-    # Statistical Summary
+    # Summary Statistics
     st.markdown("### 📋 Summary Statistics")
     col3, col4 = st.columns(2)
     with col3:
@@ -673,17 +673,14 @@ elif st.session_state.current_section == "reports":
         </div>
         """, unsafe_allow_html=True)
 
-       # Generate AI Insights
-   if st.button("🧠 Generate Enhanced AI Report Summary"):
-    # Build context from analytics data
-    recent_hr = ', '.join(map(str, heart_rates[-7:]))
-    recent_glucose = ', '.join(map(str, glucose_levels[-7:]))
+    # Generate AI Insights
+    if st.button("🧠 Generate Enhanced AI Report Summary"):
+        recent_hr = ', '.join(map(str, heart_rates[-7:]))
+        recent_glucose = ', '.join(map(str, glucose_levels[-7:]))
 
-    # Build user profile info
-    profile_info = "\n".join([f"{k.capitalize()}: {v}" for k, v in st.session_state.profile_data.items()])
+        profile_info = "\n".join([f"{k.capitalize()}: {v}" for k, v in st.session_state.profile_data.items()])
 
-    # Build detailed prompt
-    prompt = f"""
+        prompt = f"""
 You are a professional healthcare AI assistant tasked with providing a personalized health summary based on collected metrics.
 
 Patient Profile:
@@ -718,14 +715,15 @@ Include any warnings or reminders about consulting a doctor.
 Remember: Keep everything conversational and easy to understand.
 """
 
-    try:
-        llm = get_llm("reports")
-        with st.spinner("🧠 Generating enhanced report summary..."):
-            response = llm.invoke(prompt).strip()
-            st.markdown("### 🧠 AI Report Summary")
-            st.markdown(response)
-    except Exception as e:
-        st.error(f"🚨 Error generating AI summary: {str(e)}")
+        try:
+            llm = get_llm("reports")
+            with st.spinner("🧠 Generating enhanced report summary..."):
+                response = llm.invoke(prompt).strip()
+                st.markdown("### 🧠 AI Report Summary")
+                st.markdown(response)
+        except Exception as e:
+            st.error(f"🚨 Error generating AI summary: {str(e)}")
+
     # Export PDF
     if st.session_state.profile_complete:
         st.download_button(
