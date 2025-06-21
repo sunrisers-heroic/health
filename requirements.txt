@@ -6,5 +6,5 @@ fpdf
 plotly
 matplotlib
 pandas
-
+timedelta
 
