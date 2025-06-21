@@ -322,30 +322,74 @@ elif not st.session_state.profile_complete:
 # ------------------------------ CHATBOT ------------------------------
 elif st.session_state.current_section == "chat":
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown('<h2>🤖 AI Chatbot</h2>', unsafe_allow_html=True)
-    
+    st.markdown('<h2>🤖 Enhanced Health Assistant Chatbot</h2>', unsafe_allow_html=True)
+
     # Display chat messages
     for role, content in st.session_state.messages:
         bubble_class = "user-bubble" if role == "user" else "bot-bubble"
         st.markdown(f'<div class="{bubble_class}"><b>{role.capitalize()}:</b> {content}</div>', unsafe_allow_html=True)
-    
+
     # Input form
     with st.form(key='chat_form', clear_on_submit=True):
-        user_input = st.text_input("Your question:", placeholder="Type something like 'What are my symptoms?'...")
+        user_input = st.text_input("Your question:", placeholder="Ask about symptoms, medications, wellness tips, etc.")
         submit_button = st.form_submit_button(label="Send")
-    
+
     if submit_button and user_input:
         st.session_state.messages.append(("user", user_input))
-        with st.spinner("Thinking..."):
-            try:
-                llm = get_llm("chat")
-                response = llm.invoke(user_input)
+
+        # Build context from profile
+        profile_info = "\n".join([f"{k.capitalize()}: {v}" for k, v in st.session_state.profile_data.items()])
+
+        # Categorize query type
+        query_lower = user_input.lower()
+        category = "general"
+
+        if any(word in query_lower for word in ["symptom", "pain", "ache", "fever", "headache"]):
+            category = "symptoms"
+        elif any(word in query_lower for word in ["treat", "medication", "therapy", "prescribe"]):
+            category = "treatment"
+        elif any(word in query_lower for word in ["glucose", "blood sugar", "insulin", "bp", "pressure"]):
+            category = "diseases"
+        elif any(word in query_lower for word in ["ai", "report", "analyze", "summary"]):
+            category = "reports"
+
+        # Prepare enhanced prompt
+        prompt = f"""
+You are a professional medical assistant AI helping a patient with their health queries.
+Use the following guidelines:
+- Be empathetic, informative, and clear.
+- Always mention that you're not a substitute for real medical advice.
+- If unsure, recommend consulting a physician.
+
+Patient Profile:
+{profile_info}
+
+Chat History:
+{''.join([f'{r.capitalize()}: {c}\n' for r, c in st.session_state.messages[-6:]])}
+
+User Question: "{user_input}"
+
+Based on the question category ("{category}"), provide a detailed response that includes:
+1. Medical interpretation of the query
+2. Possible causes or implications
+3. Suggested actions or precautions
+4. When to consult a doctor
+
+Answer:"""
+
+        try:
+            llm = get_llm("chat")
+            with st.spinner("🧠 Analyzing query..."):
+                response = llm.invoke(prompt).strip()
+                if not response or "error" in response.lower():
+                    response = "I'm unable to respond at this time due to technical issues. Please try again later."
                 st.session_state.messages.append(("assistant", response))
                 st.rerun()
-            except Exception as e:
-                st.session_state.messages.append(("assistant", f"Error: {str(e)}"))
-                st.rerun()
-    
+
+        except Exception as e:
+            st.session_state.messages.append(("assistant", f"🚨 Error processing request: {str(e)}"))
+            st.rerun()
+
     st.markdown('</div>')
 
 # ------------------------------ SYMPTOM CHECKER ------------------------------
