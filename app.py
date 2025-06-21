@@ -1,3 +1,6 @@
+
+#Importing Libraries
+
 import streamlit as st
 from langchain_ibm import WatsonxLLM
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
@@ -9,10 +12,21 @@ import random
 import plotly.express as px
 import pandas as pd
 
+
+
+
+
 # Page config
+
 st.set_page_config(page_title="🩺 Health Assistant", layout="wide", page_icon="🩺")
 
+
+
+
+
 # Custom CSS - Violet and Pink Theme
+
+
 st.markdown("""
    <style>
 * {box-sizing: border-box; margin: 0; padding: 0;}
@@ -85,7 +99,14 @@ tr:hover {background-color: #f9f9f9;}
 </style>
 """, unsafe_allow_html=True)
 
+
+
+
+
 # Language translations for healthcare domain
+
+
+
 LANGUAGES = {
     "en": {
         "title": "🩺 Health Assistant",
@@ -137,7 +158,13 @@ LANGUAGES = {
     }
 }
 
+
+
+
 # Initialize session state
+
+
+
 if "profile_complete" not in st.session_state:
     st.session_state.profile_complete = False
 if "profile_data" not in st.session_state:
@@ -163,7 +190,14 @@ if "analytics_data" not in st.session_state:
         "dates": [datetime.now().strftime("%Y-%m-%d")]
     }
 
+
+
+
+
 # Load Watsonx credentials
+
+
+
 try:
     credentials = {
         "url": st.secrets["WATSONX_URL"],
@@ -200,7 +234,15 @@ except Exception as e:
     st.error(f"🚨 Error initializing LLM: {str(e)}")
     st.stop()
 
+
+
+
+
+
 # Function to export data as PDF including user profile
+
+
+
 def export_health_report():
     pdf = FPDF()
     pdf.add_page()
@@ -234,7 +276,14 @@ def export_health_report():
     pdf.output("health_report.pdf")
     return open("health_report.pdf", "rb").read()
 
+
+
+
+
 # Navigation Bar
+
+
+
 def render_navbar():
     lang = st.session_state.language
     st.markdown('<div class="navbar">', unsafe_allow_html=True)
@@ -262,15 +311,33 @@ def render_navbar():
             st.session_state.current_section = "settings"
     st.markdown('</div>', unsafe_allow_html=True)
 
+
+
+
+
 # Header
+
+
+
 lang = st.session_state.language
 st.markdown(f'<h1 style="text-align:center;">{LANGUAGES[lang]["title"]}</h1>', unsafe_allow_html=True)
 st.markdown(f'<p style="text-align:center; font-size:16px;">{LANGUAGES[lang]["subtitle"]}</p>', unsafe_allow_html=True)
 
+
+
+
+
 # Show navigation bar only if profile is complete
+
+
 render_navbar()
 
+
+
 # Functions
+
+#Saving Pofile
+
 def save_profile(name, age, gender, height, weight):
     st.session_state.profile_data = {
         "name": name,
@@ -282,6 +349,8 @@ def save_profile(name, age, gender, height, weight):
     }
     st.session_state.profile_complete = True
     st.success("✅ Profile saved successfully!")
+
+# Reset Pofile
 
 def reset_profile():
     st.session_state.profile_complete = False
@@ -298,7 +367,16 @@ def reset_profile():
     }
     st.rerun()
 
-# ------------------------------ SETTINGS ------------------------------
+
+
+
+
+
+#                         ------------------------------ SETTINGS ------------------------------
+
+
+
+
 if st.session_state.current_section == "settings":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown(f'<h2>⚙️ {LANGUAGES[lang]["settings"]}</h2>', unsafe_allow_html=True)
@@ -338,7 +416,16 @@ if st.session_state.current_section == "settings":
     st.markdown("#### Tip: Changes apply immediately to the app interface.")
 
     st.markdown('</div>')
-# ------------------------------ USER PROFILE ------------------------------
+
+
+
+
+
+#                      ------------------------------ USER PROFILE ------------------------------
+
+
+
+
 elif st.session_state.current_section == "profile":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<h2>🧾 Complete Your Profile</h2>', unsafe_allow_html=True)
@@ -368,7 +455,10 @@ elif not st.session_state.profile_complete:
         st.session_state.current_section = "profile"
     st.stop()
 
-# ------------------------------ CHATBOT ------------------------------
+
+
+
+#                            ------------------------------ CHATBOT ------------------------------
 elif st.session_state.current_section == "chat":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<h2>🤖 Enhanced Health Assistant Chatbot</h2>', unsafe_allow_html=True)
@@ -441,7 +531,18 @@ Answer:"""
 
     st.markdown('</div>')
 
-# ------------------------------ SYMPTOM CHECKER ------------------------------
+
+
+
+    
+
+#                    ------------------------------ SYMPTOM CHECKER ------------------------------
+
+
+
+
+
+
 elif st.session_state.current_section == "symptoms":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<h2>🧠 Symptom Checker (Disease Identifier)</h2>', unsafe_allow_html=True)
@@ -493,7 +594,11 @@ Keep it concise and professional.
     
     st.markdown('</div>')
 
-# ------------------------------ TREATMENT PLANNER ------------------------------
+
+
+
+
+#        ------------------------------ TREATMENT PLANNER ------------------------------
 elif st.session_state.current_section == "treatment":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<h2>💊 Personalized Treatment Suggestions</h2>', unsafe_allow_html=True)
@@ -548,7 +653,18 @@ Include:
     
     st.markdown('</div>')
 
-# ------------------------------ DISEASE MANAGEMENT ------------------------------
+
+
+
+
+    
+
+#                         ------------------------------ DISEASE MANAGEMENT ------------------------------
+
+
+
+
+
 elif st.session_state.current_section == "diseases":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<h2>🫀 Chronic Disease Management</h2>', unsafe_allow_html=True)
@@ -666,7 +782,17 @@ Patient Profile: {json.dumps(st.session_state.profile_data)}
 
     st.markdown('</div>')
 
-# ------------------------------ PROGRESS REPORTS ------------------------------
+
+
+
+    
+
+#                               ------------------------------ PROGRESS REPORTS ------------------------------
+
+
+
+
+
 elif st.session_state.current_section == "reports":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<h2>📈 Health Analytics Dashboard</h2>', unsafe_allow_html=True)
@@ -846,11 +972,23 @@ Remember: Keep everything conversational and easy to understand.
         )
 
     st.markdown('</div>')
+
+
+
+    
     
 # Footer
+
+
+
 lang = st.session_state.language
 st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
 
+
+
 # Debug Mode
+
+
+
 with st.expander("🔧 Debug Mode"):
     st.write("Session State:", st.session_state)
