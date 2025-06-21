@@ -608,8 +608,7 @@ Keep the response professional, easy to understand, and tailored to the individu
         try:
             llm = get_llm("reports")
             analysis = llm.invoke(prompt)
-            st.markdown(f"🧠 **AI Analysis:**
-{analysis}")
+            st.markdown(f"🧠 **AI Analysis:**{analysis}")
         except Exception as e:
             st.error(f"🚨 Error generating analysis: {str(e)}")
 
