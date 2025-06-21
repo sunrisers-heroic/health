@@ -486,37 +486,51 @@ elif st.session_state.current_section == "diseases":
 elif st.session_state.current_section == "reports":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<h2>📈 Health Analytics Dashboard</h2>', unsafe_allow_html=True)
-    
+
     # Create sample data for visualization
     dates = st.session_state.analytics_data["dates"]
     heart_rates = st.session_state.analytics_data["heart_rates"]
     glucose_levels = st.session_state.analytics_data["glucose_levels"]
-    
+
     df = pd.DataFrame({
         'Date': dates,
         'Heart Rate': heart_rates,
         'Blood Glucose': glucose_levels
     })
-    
+
     # Heart rate chart
     st.markdown("### ❤️ Heart Rate Trends")
-    fig_hr = px.line(df, x='Date', y='Heart Rate', title='Heart Rate Over Time')
+    fig_hr = px.line(df, x='Date', y='Heart Rate', title='Heart Rate Over Time', markers=True)
+    fig_hr.update_layout(yaxis_range=[40, 140], template="plotly_white")
     st.plotly_chart(fig_hr, use_container_width=True)
-    
+
     # Blood glucose chart
     st.markdown("### 🩸 Blood Glucose Levels")
-    fig_glucose = px.line(df, x='Date', y='Blood Glucose', title='Blood Glucose Levels Over Time')
+    fig_glucose = px.line(df, x='Date', y='Blood Glucose', title='Blood Glucose Levels Over Time', markers=True)
+    fig_glucose.update_layout(yaxis_range=[50, 200], template="plotly_white")
     st.plotly_chart(fig_glucose, use_container_width=True)
-    
+
+    # BMI Metric
+    if st.session_state.profile_data.get('bmi'):
+        bmi = st.session_state.profile_data['bmi']
+        st.markdown(f"### 📏 BMI: {bmi} kg/m²")
+        if bmi < 18.5:
+            st.warning("Underweight")
+        elif 18.5 <= bmi < 24.9:
+            st.success("Healthy Weight")
+        elif 25 <= bmi < 29.9:
+            st.warning("Overweight")
+        else:
+            st.error("Obese")
+
     # Metric summary with trend indicators
     col1, col2 = st.columns(2)
-    
+
     with col1:
         st.markdown("### 📊 Latest Metrics")
         latest_date = dates[-1] if len(dates) > 0 else "N/A"
         latest_hr = heart_rates[-1] if len(heart_rates) > 0 else "N/A"
         latest_glucose = glucose_levels[-1] if len(glucose_levels) > 0 else "N/A"
-        
         st.markdown(f"""
         <div class="metric-card">
             <strong>Date:</strong> {latest_date}<br>
@@ -524,33 +538,82 @@ elif st.session_state.current_section == "reports":
             <strong>Blood Glucose:</strong> {latest_glucose} mg/dL
         </div>
         """, unsafe_allow_html=True)
-    
+
     with col2:
         st.markdown("### 📈 Trend Analysis")
         hr_trend = "↑" if len(heart_rates) > 1 and heart_rates[-1] > heart_rates[-2] else "↓" if len(heart_rates) > 1 else "-"
         glucose_trend = "↑" if len(glucose_levels) > 1 and glucose_levels[-1] > glucose_levels[-2] else "↓" if len(glucose_levels) > 1 else "-"
-        
+
         st.markdown(f"""
         <div class="metric-card">
-            <strong>Heart Rate Trend:</strong> {hr_trend} <span class="{'trend-up' if hr_trend == '↑' else 'trend-down'}">{heart_rates[-1] if len(heart_rates) > 0 else '?'}</span><br>
-            <strong>Glucose Trend:</strong> {glucose_trend} <span class="{'trend-up' if glucose_trend == '↑' else 'trend-down'}">{glucose_levels[-1] if len(glucose_levels) > 0 else '?'}</span>
+            <strong>Heart Rate Trend:</strong> {hr_trend} 
+            <span class="{'trend-up' if hr_trend == '↑' else 'trend-down'}">{heart_rates[-1] if len(heart_rates) > 0 else '?'}</span><br>
+            <strong>Glucose Trend:</strong> {glucose_trend} 
+            <span class="{'trend-up' if glucose_trend == '↑' else 'trend-down'}">{glucose_levels[-1] if len(glucose_levels) > 0 else '?'}</span>
         </div>
         """, unsafe_allow_html=True)
-    
-    if st.button("Generate AI Insights"):
+
+    # Statistical Summary
+    st.markdown("### 📋 Summary Statistics")
+    col3, col4 = st.columns(2)
+    with col3:
+        avg_hr = round(sum(heart_rates) / len(heart_rates), 1) if heart_rates else "N/A"
+        min_hr = min(heart_rates) if heart_rates else "N/A"
+        max_hr = max(heart_rates) if heart_rates else "N/A"
+        st.markdown(f"""
+        <div class="metric-card">
+            <strong>Average Heart Rate:</strong> {avg_hr} bpm<br>
+            <strong>Min/Max HR:</strong> {min_hr}-{max_hr} bpm
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col4:
+        avg_gluc = round(sum(glucose_levels) / len(glucose_levels), 1) if glucose_levels else "N/A"
+        min_gluc = min(glucose_levels) if glucose_levels else "N/A"
+        max_gluc = max(glucose_levels) if glucose_levels else "N/A"
+        st.markdown(f"""
+        <div class="metric-card">
+            <strong>Average Glucose:</strong> {avg_gluc} mg/dL<br>
+            <strong>Min/Max Glucose:</strong> {min_gluc}-{max_gluc} mg/dL
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Generate AI Insights
+    if st.button("Generate Enhanced AI Insights"):
         prompt = f"""
-Analyze this patient's health trends and provide actionable insights:
-- Recent heart rates: {', '.join(map(str, heart_rates[-7:]))}
-- Recent glucose levels: {', '.join(map(str, glucose_levels[-7:]))}
-- Patient profile: {json.dumps(st.session_state.profile_data)}
+You are a medical AI assistant analyzing health trends. Provide comprehensive insights based on the following patient data:
+
+Patient Profile:
+- Name: {st.session_state.profile_data.get('name', 'Unknown')}
+- Age: {st.session_state.profile_data.get('age', 'Unknown')}
+- Gender: {st.session_state.profile_data.get('gender', 'Unknown')}
+- BMI: {st.session_state.profile_data.get('bmi', 'Unknown')}
+
+Recent Metrics:
+- Last 7 Heart Rates: {', '.join(map(str, heart_rates[-7:]))}
+- Average Heart Rate: {round(sum(heart_rates)/len(heart_rates), 1) if heart_rates else 'N/A'}
+- Last 7 Glucose Levels: {', '.join(map(str, glucose_levels[-7:]))}
+- Average Glucose Level: {round(sum(glucose_levels)/len(glucose_levels), 1) if glucose_levels else 'N/A'}
+
+Include:
+1. Interpretation of trends (increasing/decreasing/stable)
+2. Potential health implications
+3. Personalized lifestyle or dietary recommendations
+4. Suggestions for further testing or specialist consultation
+5. Risk assessment based on BMI and metrics
+
+Keep the response professional, easy to understand, and tailored to the individual's profile.
 """
+
         try:
             llm = get_llm("reports")
             analysis = llm.invoke(prompt)
-            st.markdown(f"🧠 **AI Analysis:**\n\n{analysis}")
+            st.markdown(f"🧠 **AI Analysis:**
+{analysis}")
         except Exception as e:
             st.error(f"🚨 Error generating analysis: {str(e)}")
-    
+
+    # Export PDF
     if st.session_state.profile_complete:
         st.download_button(
             label=LANGUAGES[lang]["export_pdf"],
@@ -558,6 +621,8 @@ Analyze this patient's health trends and provide actionable insights:
             file_name="health_report.pdf",
             mime="application/pdf"
         )
+
+    st.markdown('</div>')
 
 # Footer
 lang = st.session_state.language
