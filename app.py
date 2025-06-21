@@ -780,7 +780,7 @@ Patient Profile: {json.dumps(st.session_state.profile_data)}
         else:
             st.info("ℹ️ No historical data available yet.")
 
-     st.markdown('Thanks')
+      st.markdown('Thanks')
 
 
 
@@ -971,7 +971,7 @@ Remember: Keep everything conversational and easy to understand.
             mime="application/pdf"
         )
 
-    st.markdown('Thanks')
+     st.markdown('Thanks')
 
 
     
