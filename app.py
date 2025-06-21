@@ -446,7 +446,7 @@ elif st.session_state.current_section == "profile":
         if st.button("🔄 Reset Profile"):
             reset_profile()
     
-    st.markdown('</div>')
+    st.markdown('Thanks')
 
 # If profile not completed, stop further access
 elif not st.session_state.profile_complete:
@@ -529,7 +529,7 @@ Answer:"""
             st.session_state.messages.append(("assistant", f"🚨 Error processing request: {str(e)}"))
             st.rerun()
 
-    st.markdown('</div>')
+   st.markdown('Thanks')
 
 
 
@@ -592,7 +592,7 @@ Keep it concise and professional.
             except Exception as e:
                 st.error(f"🚨 Error getting diagnosis: {str(e)}")
     
-    st.markdown('</div>')
+   st.markdown('Thanks')
 
 
 
@@ -651,7 +651,7 @@ Include:
             except Exception as e:
                 st.error(f"🚨 Error generating treatment plan: {str(e)}")
     
-    st.markdown('</div>')
+   st.markdown('Thanks')
 
 
 
@@ -780,7 +780,7 @@ Patient Profile: {json.dumps(st.session_state.profile_data)}
         else:
             st.info("ℹ️ No historical data available yet.")
 
-    st.markdown('</div>')
+    st.markdown('Thanks')
 
 
 
@@ -971,8 +971,7 @@ Remember: Keep everything conversational and easy to understand.
             mime="application/pdf"
         )
 
-    st.markdown('</div>')
-
+   st.markdown('Thanks')
 
 
     
