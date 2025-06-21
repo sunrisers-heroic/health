@@ -529,7 +529,7 @@ Answer:"""
             st.session_state.messages.append(("assistant", f"🚨 Error processing request: {str(e)}"))
             st.rerun()
 
-   st.markdown('Thanks')
+    st.markdown('Thanks')
 
 
 
