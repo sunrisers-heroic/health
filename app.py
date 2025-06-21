@@ -250,7 +250,7 @@ def reset_profile():
     st.rerun()
 
 # ------------------------------ SETTINGS ------------------------------
-elif st.session_state.current_section == "settings":
+if st.session_state.current_section == "settings":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown(f'<h2>⚙️ {LANGUAGES[lang]["settings"]}</h2>', unsafe_allow_html=True)
 
