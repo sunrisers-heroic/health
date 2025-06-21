@@ -674,39 +674,58 @@ elif st.session_state.current_section == "reports":
         """, unsafe_allow_html=True)
 
     # Generate AI Insights
-    if st.button("Generate Enhanced AI Insights"):
-        prompt = f"""
-You are a medical AI assistant analyzing health trends. Provide comprehensive insights based on the following patient data:
+   if st.button("🧠 Generate Enhanced AI Report Summary"):
+    # Build context from analytics data
+    recent_hr = ', '.join(map(str, heart_rates[-7:]))
+    recent_glucose = ', '.join(map(str, glucose_levels[-7:]))
+
+    # Build user profile info
+    profile_info = "\n".join([f"{k.capitalize()}: {v}" for k, v in st.session_state.profile_data.items()])
+
+    # Build detailed prompt
+    prompt = f"""
+You are a professional healthcare AI assistant tasked with providing a personalized health summary based on collected metrics.
 
 Patient Profile:
-- Name: {st.session_state.profile_data.get('name', 'Unknown')}
-- Age: {st.session_state.profile_data.get('age', 'Unknown')}
-- Gender: {st.session_state.profile_data.get('gender', 'Unknown')}
-- BMI: {st.session_state.profile_data.get('bmi', 'Unknown')}
+{profile_info}
 
 Recent Metrics:
-- Last 7 Heart Rates: {', '.join(map(str, heart_rates[-7:]))}
-- Average Heart Rate: {round(sum(heart_rates)/len(heart_rates), 1) if heart_rates else 'N/A'}
-- Last 7 Glucose Levels: {', '.join(map(str, glucose_levels[-7:]))}
-- Average Glucose Level: {round(sum(glucose_levels)/len(glucose_levels), 1) if glucose_levels else 'N/A'}
+Heart Rate (bpm): [{recent_hr}]
+Blood Glucose (mg/dL): [{recent_glucose}]
 
-Include:
-1. Interpretation of trends (increasing/decreasing/stable)
-2. Potential health implications
-3. Personalized lifestyle or dietary recommendations
-4. Suggestions for further testing or specialist consultation
-5. Risk assessment based on BMI and metrics
+Instructions:
+1. Analyze trends over time and note if values are increasing, decreasing, or stable.
+2. Interpret what these trends may mean in terms of health implications.
+3. Provide simple, easy-to-understand explanations without medical jargon.
+4. Suggest practical lifestyle changes (e.g., diet, exercise).
+5. Mention when a medical checkup is recommended.
+6. Format output using bullet points and short paragraphs.
 
-Keep the response professional, easy to understand, and tailored to the individual's profile.
+Output format:
+### 🔍 Trend Overview
+- Heart Rate: [Stable/Increasing/Decreasing]
+- Blood Glucose: [Stable/Increasing/Decreasing]
+
+### 🩺 Health Implications
+Explain what the trend might indicate about the patient's current condition.
+
+### 💡 Recommendations
+Provide 2-3 lifestyle suggestions tailored to the patient's data.
+
+### ⚠️ Important Notes
+Include any warnings or reminders about consulting a doctor.
+
+Remember: Keep everything conversational and easy to understand.
 """
 
-        try:
-            llm = get_llm("reports")
-            analysis = llm.invoke(prompt)
-            st.markdown(f"🧠 **AI Analysis:**{analysis}")
-        except Exception as e:
-            st.error(f"🚨 Error generating analysis: {str(e)}")
-
+    try:
+        llm = get_llm("reports")
+        with st.spinner("🧠 Generating enhanced report summary..."):
+            response = llm.invoke(prompt).strip()
+            st.markdown("### 🧠 AI Report Summary")
+            st.markdown(response)
+    except Exception as e:
+        st.error(f"🚨 Error generating AI summary: {str(e)}")
     # Export PDF
     if st.session_state.profile_complete:
         st.download_button(
