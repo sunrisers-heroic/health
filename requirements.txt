@@ -3,5 +3,7 @@ ibm-watsonx-ai
 langchain
 langchain-ibm
 fpdf
+plotly
+matplotlib
 
 
