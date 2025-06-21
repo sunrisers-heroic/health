@@ -559,7 +559,30 @@ elif st.session_state.current_section == "reports":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<h2>📈 Health Analytics Dashboard</h2>', unsafe_allow_html=True)
 
-    # Create sample data for visualization
+    # --------------------------
+    # New: Manual Data Input Section
+    # --------------------------
+    st.markdown("### 📝 Log New Health Metrics")
+    col_input1, col_input2, col_input3 = st.columns(3)
+    with col_input1:
+        new_date = st.date_input("Select Date", value=datetime.today())
+    with col_input2:
+        new_hr = st.number_input("Heart Rate (bpm)", min_value=40, max_value=140, step=1)
+    with col_input3:
+        new_glucose = st.number_input("Blood Glucose (mg/dL)", min_value=50, max_value=200, step=1)
+
+    if st.button("➕ Add Metric"):
+        if new_hr > 0 and new_glucose > 0:
+            st.session_state.analytics_data["dates"].append(new_date.strftime("%Y-%m-%d"))
+            st.session_state.analytics_data["heart_rates"].append(new_hr)
+            st.session_state.analytics_data["glucose_levels"].append(new_glucose)
+            st.success("✅ Metric added successfully!")
+        else:
+            st.warning("⚠️ Please enter valid values for both metrics.")
+
+    # --------------------------
+    # Existing Visualization Code (unchanged)
+    # --------------------------
     dates = st.session_state.analytics_data["dates"]
     heart_rates = st.session_state.analytics_data["heart_rates"]
     glucose_levels = st.session_state.analytics_data["glucose_levels"]
@@ -694,7 +717,6 @@ Keep the response professional, easy to understand, and tailored to the individu
         )
 
     st.markdown('</div>')
-
 # Footer
 lang = st.session_state.language
 st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
