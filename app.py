@@ -724,7 +724,7 @@ Remember: Keep everything conversational and easy to understand.
         except Exception as e:
             st.error(f"🚨 Error generating AI summary: {str(e)}")
 
-    # Export PDF
+    # Export PDF Button
     if st.session_state.profile_complete:
         st.download_button(
             label=LANGUAGES[lang]["export_pdf"],
@@ -734,6 +734,7 @@ Remember: Keep everything conversational and easy to understand.
         )
 
     st.markdown('</div>')
+    
 # Footer
 lang = st.session_state.language
 st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
