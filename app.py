@@ -803,12 +803,23 @@ elif st.session_state.current_section == "reports":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<h2>📈 Health Analytics Dashboard</h2>', unsafe_allow_html=True)
 
+    # Initialize session state analytics data if not exists
+    if 'analytics_data' not in st.session_state:
+        st.session_state.analytics_data = {
+            "dates": [],
+            "heart_rates": [],
+            "glucose_levels": [],
+            "peak_flow": [],
+            "hba1c": []
+        }
+
     # --------------------------
     # Bulk Metric Input Section
     # --------------------------
     st.markdown("### 📝 Log Multiple Metrics at Once")
     range_type = st.selectbox("Select Range Type", ["By Day", "By Week", "By Month"])
     dates_to_add = []
+
     if range_type == "By Day":
         date_range = st.date_input("Select Date Range", value=(datetime.today(), datetime.today()))
         if len(date_range) == 2:
@@ -849,6 +860,7 @@ elif st.session_state.current_section == "reports":
         'Peak Flow (L/min)': [''] * len(dates_to_add),
         'HbA1c (%)': [''] * len(dates_to_add)
     })
+
     edited_df = st.data_editor(default_data, use_container_width=True, num_rows="dynamic")
 
     if st.button("➕ Add Bulk Metrics"):
@@ -882,24 +894,21 @@ elif st.session_state.current_section == "reports":
         except Exception as e:
             st.error(f"🚨 An unexpected error occurred: {str(e)}")
 
-    # Initialize missing lists
-    if "peak_flow" not in st.session_state.analytics_data:
-        st.session_state.analytics_data["peak_flow"] = []
-    if "hba1c" not in st.session_state.analytics_data:
-        st.session_state.analytics_data["hba1c"] = []
-
+    # Ensure all lists are the same length before creating DataFrame
     dates = st.session_state.analytics_data.get("dates", [])
     heart_rates = st.session_state.analytics_data.get("heart_rates", [])
     glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
     peak_flow = st.session_state.analytics_data.get("peak_flow", [])
     hba1c = st.session_state.analytics_data.get("hba1c", [])
 
+    min_len = min(len(dates), len(heart_rates), len(glucose_levels), len(peak_flow), len(hba1c))
+
     df = pd.DataFrame({
-        'Date': dates,
-        'Heart Rate': heart_rates,
-        'Blood Glucose': glucose_levels,
-        'Peak Flow': peak_flow,
-        'HbA1c': hba1c
+        'Date': dates[:min_len],
+        'Heart Rate': heart_rates[:min_len],
+        'Blood Glucose': glucose_levels[:min_len],
+        'Peak Flow': peak_flow[:min_len],
+        'HbA1c': hba1c[:min_len]
     })
 
     # Charts
@@ -976,34 +985,6 @@ elif st.session_state.current_section == "reports":
         </div>
         """, unsafe_allow_html=True)
 
-    # Summary Statistics
-    st.markdown("### 📋 Summary Statistics")
-    col3, col4 = st.columns(2)
-    with col3:
-        avg_hr = round(sum(heart_rates) / len(heart_rates), 1) if heart_rates else "N/A"
-        min_hr = min(heart_rates) if heart_rates else "N/A"
-        max_hr = max(heart_rates) if heart_rates else "N/A"
-        st.markdown(f"""
-        <div class="metric-card">
-            <strong>Average Heart Rate:</strong> {avg_hr} bpm<br>
-            <strong>Min/Max HR:</strong> {min_hr}-{max_hr} bpm
-        </div>
-        """, unsafe_allow_html=True)
-    with col4:
-        avg_gluc = round(sum(glucose_levels) / len(glucose_levels), 1) if glucose_levels else "N/A"
-        min_gluc = min(glucose_levels) if glucose_levels else "N/A"
-        max_gluc = max(glucose_levels) if glucose_levels else "N/A"
-        avg_peak = round(sum(peak_flow) / len(peak_flow), 1) if peak_flow else "N/A"
-        avg_hba1c = round(sum(hba1c) / len(hba1c), 1) if hba1c else "N/A"
-        st.markdown(f"""
-        <div class="metric-card">
-            <strong>Average Glucose:</strong> {avg_gluc} mg/dL<br>
-            <strong>Min/Max Glucose:</strong> {min_gluc}-{max_gluc} mg/dL<br>
-            <strong>Average Peak Flow:</strong> {avg_peak} L/min<br>
-            <strong>Average HbA1c:</strong> {avg_hba1c} %
-        </div>
-        """, unsafe_allow_html=True)
-
     # Generate AI Insights
     ai_summary = ""
     if st.button("🧠 Generate Enhanced AI Report Summary"):
@@ -1055,14 +1036,15 @@ Remember: Keep everything conversational and easy to understand.
 
     # Export PDF Button
     if st.session_state.profile_complete:
-        pdf_data = export_health_report(ai_summary=ai_summary, include_ai=bool(ai_summary))
+        pdf_data = export_health_report(ai_summary=ai_summary)
         st.download_button(
             label="Export PDF",
             data=pdf_data,
             file_name="health_report.pdf",
             mime="application/pdf"
         )
-    st.markdown('thanks')
+
+    st.markdown('Thanks')
 
     
     
