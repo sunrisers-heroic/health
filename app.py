@@ -243,38 +243,45 @@ except Exception as e:
 
 
 
-def export_health_report():
+def export_health_report(ai_summary=""):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Arial", size=12)
-    
-    # Add Title
-    pdf.cell(0, 10, txt="HealthAI - Personalized Health Report", ln=True, align='C')
+
+    # Header
+    pdf.set_fill_color(200, 220, 255)
+    pdf.cell(0, 10, txt="Health Report Summary", ln=True, align='C', fill=True)
     pdf.ln(10)
-    
-    # Add User Info
-    if "profile_data" in st.session_state and st.session_state.profile_data:
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(0, 10, txt="User Information", ln=True)
-        pdf.set_font("Arial", '', 12)
-        for key, value in st.session_state.profile_data.items():
-            pdf.cell(0, 10, txt=f"{key.capitalize()}: {value}", ln=True)
-    
-    # Add Metrics
+
+    # Profile Data
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 10, txt="Patient Profile", ln=True)
+    pdf.set_font("Arial", size=12)
+    for k, v in st.session_state.profile_data.items():
+        pdf.cell(0, 10, txt=f"{k.capitalize()}: {v}", ln=True)
+
     pdf.ln(10)
     pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 10, txt="Recent Health Metrics", ln=True)
-    pdf.set_font("Arial", '', 12)
-    
-    if st.session_state.health_data:
-        for key, value in st.session_state.health_data.items():
-            pdf.cell(0, 10, txt=f"{key.replace('_', ' ').capitalize()}: {value}", ln=True)
-    else:
-        pdf.cell(0, 10, txt="No health metrics recorded yet.", ln=True)
-    
-    pdf.output("health_report.pdf")
-    return open("health_report.pdf", "rb").read()
+    pdf.cell(0, 10, txt="Latest Metrics", ln=True)
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, txt=f"Date: {st.session_state.analytics_data.get('dates', [])[-1] if st.session_state.analytics_data.get('dates') else 'N/A'}", ln=True)
+    pdf.cell(0, 10, txt=f"Heart Rate: {st.session_state.analytics_data.get('heart_rates', [])[-1] if st.session_state.analytics_data.get('heart_rates') else 'N/A'} bpm", ln=True)
+    pdf.cell(0, 10, txt=f"Blood Glucose: {st.session_state.analytics_data.get('glucose_levels', [])[-1] if st.session_state.analytics_data.get('glucose_levels') else 'N/A'} mg/dL", ln=True)
+    pdf.cell(0, 10, txt=f"Peak Flow: {st.session_state.analytics_data.get('peak_flow', [])[-1] if st.session_state.analytics_data.get('peak_flow') else 'N/A'} L/min", ln=True)
+    pdf.cell(0, 10, txt=f"HbA1c: {st.session_state.analytics_data.get('hba1c', [])[-1] if st.session_state.analytics_data.get('hba1c') else 'N/A'} %", ln=True)
+
+    # AI Summary
+    if ai_summary:
+        pdf.ln(10)
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, txt="AI Report Summary", ln=True)
+        pdf.set_font("Arial", size=12)
+        for line in ai_summary.split('\n'):
+            if line.strip():
+                pdf.multi_cell(0, 10, txt=line.strip())
+
+    return pdf.output(dest='S').encode('latin-1')
 
 
 
@@ -800,9 +807,8 @@ elif st.session_state.current_section == "reports":
     # Bulk Metric Input Section
     # --------------------------
     st.markdown("### 📝 Log Multiple Metrics at Once")
-    
     range_type = st.selectbox("Select Range Type", ["By Day", "By Week", "By Month"])
-
+    dates_to_add = []
     if range_type == "By Day":
         date_range = st.date_input("Select Date Range", value=(datetime.today(), datetime.today()))
         if len(date_range) == 2:
@@ -811,9 +817,6 @@ elif st.session_state.current_section == "reports":
             dates_to_add = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(delta)]
         else:
             st.warning("⚠️ Please select both start and end dates.")
-            st.markdown('</div>')
-            # Removed invalid 'continue' here
-
     elif range_type == "By Week":
         start_week = st.date_input("Start of Week", value=datetime.today())
         weeks = st.number_input("Number of Weeks", min_value=1, max_value=52, value=1)
@@ -822,12 +825,10 @@ elif st.session_state.current_section == "reports":
             base_date = start_week + timedelta(weeks=week)
             for i in range(7):
                 dates_to_add.append((base_date + timedelta(days=i)).strftime("%Y-%m-%d"))
-
     elif range_type == "By Month":
         year = st.number_input("Year", min_value=2000, max_value=2100, value=datetime.now().year)
         month = st.slider("Month", 1, 12, value=datetime.now().month)
         try:
-            # Get number of days in selected month
             if month == 12:
                 next_month = 1
                 next_year = year + 1
@@ -841,13 +842,13 @@ elif st.session_state.current_section == "reports":
             st.error(f"🚨 Error calculating month: {str(e)}")
             dates_to_add = []
 
-    # Create editable dataframe-like input
     default_data = pd.DataFrame({
         'Date': dates_to_add,
         'Heart Rate (bpm)': [''] * len(dates_to_add),
-        'Blood Glucose (mg/dL)': [''] * len(dates_to_add)
+        'Blood Glucose (mg/dL)': [''] * len(dates_to_add),
+        'Peak Flow (L/min)': [''] * len(dates_to_add),
+        'HbA1c (%)': [''] * len(dates_to_add)
     })
-
     edited_df = st.data_editor(default_data, use_container_width=True, num_rows="dynamic")
 
     if st.button("➕ Add Bulk Metrics"):
@@ -857,15 +858,23 @@ elif st.session_state.current_section == "reports":
                 try:
                     hr = int(row['Heart Rate (bpm)']) if not pd.isna(row['Heart Rate (bpm)']) else None
                     gluc = int(row['Blood Glucose (mg/dL)']) if not pd.isna(row['Blood Glucose (mg/dL)']) else None
+                    peak_flow = float(row['Peak Flow (L/min)']) if not pd.isna(row['Peak Flow (L/min)']) else None
+                    hba1c = float(row['HbA1c (%)']) if not pd.isna(row['HbA1c (%)']) else None
                     date = row['Date']
-
-                    if hr is not None and gluc is not None and 40 <= hr <= 140 and 50 <= gluc <= 200:
+                    valid = True
+                    if hr is not None and not (40 <= hr <= 140): valid = False
+                    if gluc is not None and not (50 <= gluc <= 200): valid = False
+                    if peak_flow is not None and not (100 <= peak_flow <= 800): valid = False
+                    if hba1c is not None and not (4 <= hba1c <= 12): valid = False
+                    if valid:
                         st.session_state.analytics_data["dates"].append(date)
                         st.session_state.analytics_data["heart_rates"].append(hr)
                         st.session_state.analytics_data["glucose_levels"].append(gluc)
+                        st.session_state.analytics_data["peak_flow"].append(peak_flow)
+                        st.session_state.analytics_data["hba1c"].append(hba1c)
                         success_count += 1
                     else:
-                        st.warning(f"⚠️ Invalid values found on row {index+1}. Please enter valid Heart Rate (40–140 bpm) and Glucose (50–200 mg/dL).")
+                        st.warning(f"⚠️ Invalid values found on row {index+1}. Please enter valid ranges.")
                 except Exception as e:
                     st.warning(f"⚠️ Error processing row {index}: {str(e)}")
             if success_count > 0:
@@ -873,30 +882,46 @@ elif st.session_state.current_section == "reports":
         except Exception as e:
             st.error(f"🚨 An unexpected error occurred: {str(e)}")
 
-    # --------------------------
-    # Visualization & Analytics
-    # --------------------------
+    # Initialize missing lists
+    if "peak_flow" not in st.session_state.analytics_data:
+        st.session_state.analytics_data["peak_flow"] = []
+    if "hba1c" not in st.session_state.analytics_data:
+        st.session_state.analytics_data["hba1c"] = []
+
     dates = st.session_state.analytics_data.get("dates", [])
     heart_rates = st.session_state.analytics_data.get("heart_rates", [])
     glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
+    peak_flow = st.session_state.analytics_data.get("peak_flow", [])
+    hba1c = st.session_state.analytics_data.get("hba1c", [])
 
     df = pd.DataFrame({
         'Date': dates,
         'Heart Rate': heart_rates,
-        'Blood Glucose': glucose_levels
+        'Blood Glucose': glucose_levels,
+        'Peak Flow': peak_flow,
+        'HbA1c': hba1c
     })
 
-    # Heart rate chart
+    # Charts
     st.markdown("### ❤️ Heart Rate Trends")
     fig_hr = px.line(df, x='Date', y='Heart Rate', title='Heart Rate Over Time', markers=True)
     fig_hr.update_layout(yaxis_range=[40, 140], template="plotly_white")
     st.plotly_chart(fig_hr, use_container_width=True)
 
-    # Blood glucose chart
     st.markdown("### 🩸 Blood Glucose Levels")
     fig_glucose = px.line(df, x='Date', y='Blood Glucose', title='Blood Glucose Levels Over Time', markers=True)
     fig_glucose.update_layout(yaxis_range=[50, 200], template="plotly_white")
     st.plotly_chart(fig_glucose, use_container_width=True)
+
+    st.markdown("### 🫁 Peak Flow Trends")
+    fig_peak = px.line(df, x='Date', y='Peak Flow', title='Peak Flow (L/min)', markers=True)
+    fig_peak.update_layout(yaxis_range=[100, 800], template="plotly_white")
+    st.plotly_chart(fig_peak, use_container_width=True)
+
+    st.markdown("### 🧬 HbA1c Levels")
+    fig_hba1c = px.line(df, x='Date', y='HbA1c', title='HbA1c (%) Over Time', markers=True)
+    fig_hba1c.update_layout(yaxis_range=[4, 12], template="plotly_white")
+    st.plotly_chart(fig_hba1c, use_container_width=True)
 
     # BMI Display
     if st.session_state.profile_data.get('bmi'):
@@ -918,11 +943,15 @@ elif st.session_state.current_section == "reports":
         latest_date = dates[-1] if len(dates) > 0 else "N/A"
         latest_hr = heart_rates[-1] if len(heart_rates) > 0 else "N/A"
         latest_glucose = glucose_levels[-1] if len(glucose_levels) > 0 else "N/A"
+        latest_peak = peak_flow[-1] if len(peak_flow) > 0 else "N/A"
+        latest_hba1c = hba1c[-1] if len(hba1c) > 0 else "N/A"
         st.markdown(f"""
         <div class="metric-card">
             <strong>Date:</strong> {latest_date}<br>
             <strong>Heart Rate:</strong> {latest_hr} bpm<br>
-            <strong>Blood Glucose:</strong> {latest_glucose} mg/dL
+            <strong>Blood Glucose:</strong> {latest_glucose} mg/dL<br>
+            <strong>Peak Flow:</strong> {latest_peak} L/min<br>
+            <strong>HbA1c:</strong> {latest_hba1c} %
         </div>
         """, unsafe_allow_html=True)
 
@@ -931,13 +960,19 @@ elif st.session_state.current_section == "reports":
         st.markdown("### 📈 Trend Analysis")
         hr_trend = "↑" if len(heart_rates) > 1 and heart_rates[-1] > heart_rates[-2] else "↓" if len(heart_rates) > 1 else "-"
         glucose_trend = "↑" if len(glucose_levels) > 1 and glucose_levels[-1] > glucose_levels[-2] else "↓" if len(glucose_levels) > 1 else "-"
+        peak_trend = "↑" if len(peak_flow) > 1 and peak_flow[-1] > peak_flow[-2] else "↓" if len(peak_flow) > 1 else "-"
+        hba1c_trend = "↑" if len(hba1c) > 1 and hba1c[-1] > hba1c[-2] else "↓" if len(hba1c) > 1 else "-"
 
         st.markdown(f"""
         <div class="metric-card">
             <strong>Heart Rate Trend:</strong> {hr_trend} 
             <span class="{'trend-up' if hr_trend == '↑' else 'trend-down'}">{heart_rates[-1] if len(heart_rates) > 0 else '?'}</span><br>
             <strong>Glucose Trend:</strong> {glucose_trend} 
-            <span class="{'trend-up' if glucose_trend == '↑' else 'trend-down'}">{glucose_levels[-1] if len(glucose_levels) > 0 else '?'}</span>
+            <span class="{'trend-up' if glucose_trend == '↑' else 'trend-down'}">{glucose_levels[-1] if len(glucose_levels) > 0 else '?'}</span><br>
+            <strong>Peak Flow Trend:</strong> {peak_trend}
+            <span class="{'trend-up' if peak_trend == '↑' else 'trend-down'}">{latest_peak}</span><br>
+            <strong>HbA1c Trend:</strong> {hba1c_trend}
+            <span class="{'trend-up' if hba1c_trend == '↑' else 'trend-down'}">{latest_hba1c}</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -954,25 +989,29 @@ elif st.session_state.current_section == "reports":
             <strong>Min/Max HR:</strong> {min_hr}-{max_hr} bpm
         </div>
         """, unsafe_allow_html=True)
-
     with col4:
         avg_gluc = round(sum(glucose_levels) / len(glucose_levels), 1) if glucose_levels else "N/A"
         min_gluc = min(glucose_levels) if glucose_levels else "N/A"
         max_gluc = max(glucose_levels) if glucose_levels else "N/A"
+        avg_peak = round(sum(peak_flow) / len(peak_flow), 1) if peak_flow else "N/A"
+        avg_hba1c = round(sum(hba1c) / len(hba1c), 1) if hba1c else "N/A"
         st.markdown(f"""
         <div class="metric-card">
             <strong>Average Glucose:</strong> {avg_gluc} mg/dL<br>
-            <strong>Min/Max Glucose:</strong> {min_gluc}-{max_gluc} mg/dL
+            <strong>Min/Max Glucose:</strong> {min_gluc}-{max_gluc} mg/dL<br>
+            <strong>Average Peak Flow:</strong> {avg_peak} L/min<br>
+            <strong>Average HbA1c:</strong> {avg_hba1c} %
         </div>
         """, unsafe_allow_html=True)
 
     # Generate AI Insights
+    ai_summary = ""
     if st.button("🧠 Generate Enhanced AI Report Summary"):
         recent_hr = ', '.join(map(str, heart_rates[-7:]))
         recent_glucose = ', '.join(map(str, glucose_levels[-7:]))
-
+        recent_peak = ', '.join(map(str, peak_flow[-7:]))
+        recent_hba1c = ', '.join(map(str, hba1c[-7:]))
         profile_info = "\n".join([f"{k.capitalize()}: {v}" for k, v in st.session_state.profile_data.items()])
-
         prompt = f"""
 You are a professional healthcare AI assistant tasked with providing a personalized health summary based on collected metrics.
 Patient Profile:
@@ -980,6 +1019,8 @@ Patient Profile:
 Recent Metrics:
 Heart Rate (bpm): [{recent_hr}]
 Blood Glucose (mg/dL): [{recent_glucose}]
+Peak Flow (L/min): [{recent_peak}]
+HbA1c (%): [{recent_hba1c}]
 Instructions:
 1. Analyze trends over time and note if values are increasing, decreasing, or stable.
 2. Interpret what these trends may mean in terms of health implications.
@@ -991,6 +1032,8 @@ Output format:
 ### 🔍 Trend Overview
 - Heart Rate: [Stable/Increasing/Decreasing]
 - Blood Glucose: [Stable/Increasing/Decreasing]
+- Peak Flow: [Stable/Increasing/Decreasing]
+- HbA1c: [Stable/Increasing/Decreasing]
 ### 🩺 Health Implications
 Explain what the trend might indicate about the patient's current condition.
 ### 💡 Recommendations
@@ -1006,19 +1049,20 @@ Remember: Keep everything conversational and easy to understand.
                 response = llm.invoke(prompt).strip()
                 st.markdown("### 🧠 AI Report Summary")
                 st.markdown(response)
+                ai_summary = response
         except Exception as e:
             st.error(f"🚨 Error generating AI summary: {str(e)}")
 
     # Export PDF Button
     if st.session_state.profile_complete:
+        pdf_data = export_health_report(ai_summary=ai_summary, include_ai=bool(ai_summary))
         st.download_button(
-            label=LANGUAGES[lang]["export_pdf"],
-            data=export_health_report(),
+            label="Export PDF",
+            data=pdf_data,
             file_name="health_report.pdf",
             mime="application/pdf"
         )
-
-    st.markdown('</div>')
+    st.markdown('thanks')
 
     
     
