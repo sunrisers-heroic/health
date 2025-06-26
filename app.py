@@ -1,6 +1,6 @@
+# app.py
 
-#Importing Libraries
-
+# Importing Libraries
 import streamlit as st
 from langchain_ibm import WatsonxLLM
 from ibm_watson_machine_learning.metanames import GenTextParamsMetaNames as GenParams
@@ -12,31 +12,20 @@ import random
 import plotly.express as px
 import pandas as pd
 
-
-
-
-
 # Page config
-
 st.set_page_config(page_title="🩺 Health Assistant", layout="wide", page_icon="🩺")
 
-
-
-
-
-# Custom CSS - Violet and Pink Theme
-
-
+# Custom CSS - Enhanced Violet and Pink Theme with Borders and Latin Math Font
 st.markdown("""
-   <style>
+<style>
 * {box-sizing: border-box; margin: 0; padding: 0;}
-body {background: linear-gradient(to right bottom, #f5e6fa, #ffe5f5); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #2c3e50; line-height: 1.6; padding: 20px;}
+body {background: linear-gradient(to right bottom, #f5e6fa, #ffe5f5); font-family: 'Latin Modern Math', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #2c3e50; line-height: 1.6; padding: 20px;}
 h1,h2,h3,h4,h5,h6 {color: #8e44ad; font-weight: 600; margin-bottom: 10px;}
 p {font-size: 16px; color: #34495e;}
 a {color: #8e44ad; text-decoration: none;} a:hover {text-decoration: underline;}
-.main {background-color: #ffffffcc; backdrop-filter: blur(10px); border-radius: 16px; padding: 30px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); max-width: 1200px; margin: auto; animation: fadeIn 0.5s ease-in-out;}
+.main {background-color: #ffffffcc; backdrop-filter: blur(10px); border-radius: 16px; padding: 30px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); max-width: 1200px; margin: auto; animation: fadeIn 0.5s ease-in-out; border: 2px solid #ddd;}
 @keyframes fadeIn {from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: translateY(0);}}
-.card {background-color: #fff; border-left: 6px solid #8e44ad; border-radius: 12px; padding: 25px; margin: 20px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease;} 
+.card {background-color: #fff; border-left: 6px solid #8e44ad; border-radius: 12px; padding: 25px; margin: 20px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease; border: 1px solid #eee;} 
 .card:hover {transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1);}
 .navbar {display: flex; justify-content: center; gap: 20px; padding: 15px 0; background: linear-gradient(to right, #8e44ad, #ec7063); border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 999; transition: all 0.3s ease;}
 .nav-button {background-color: #ffffff; color: #8e44ad; border: none; width: 60px; height: 60px; font-size: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
@@ -98,6 +87,8 @@ tr:hover {background-color: #f9f9f9;}
 .js-plotly-plot .plotly .modebar button:hover svg path {fill: #8e44ad !important;}
 </style>
 """, unsafe_allow_html=True)
+
+# Remaining code stays unchanged until the end of the file...
 
 
 
