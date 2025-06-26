@@ -1054,10 +1054,8 @@ elif page == "Reports":
         for key in data_dict:
             current_length = len(data_dict[key])
             if current_length < max_length:
-                # Pad with None if the list is shorter
                 data_dict[key].extend([None] * (max_length - current_length))
             elif current_length > max_length:
-                # Truncate if the list is longer
                 data_dict[key] = data_dict[key][:max_length]
         return data_dict
 
@@ -1136,8 +1134,7 @@ elif page == "Reports":
     # Step 3: Trend Analysis
     st.subheader("### 📈 Trend Analysis")
     hr_trend = (
-        "↑"
-        if len(heart_rates) > 1
+        "↑" if len(heart_rates) > 1
         and isinstance(heart_rates[-1], (int, float))
         and isinstance(heart_rates[-2], (int, float))
         and heart_rates[-1] > heart_rates[-2]
@@ -1145,12 +1142,10 @@ elif page == "Reports":
         if len(heart_rates) > 1
         and isinstance(heart_rates[-1], (int, float))
         and isinstance(heart_rates[-2], (int, float))
-        and heart_rates[-1] < heart_rates[-2]
         else "-"
     )
     glucose_trend = (
-        "↑"
-        if len(glucose_levels) > 1
+        "↑" if len(glucose_levels) > 1
         and isinstance(glucose_levels[-1], (int, float))
         and isinstance(glucose_levels[-2], (int, float))
         and glucose_levels[-1] > glucose_levels[-2]
@@ -1158,12 +1153,10 @@ elif page == "Reports":
         if len(glucose_levels) > 1
         and isinstance(glucose_levels[-1], (int, float))
         and isinstance(glucose_levels[-2], (int, float))
-        and glucose_levels[-1] < glucose_levels[-2]
         else "-"
     )
     peak_trend = (
-        "↑"
-        if len(peak_flow) > 1
+        "↑" if len(peak_flow) > 1
         and isinstance(peak_flow[-1], (int, float))
         and isinstance(peak_flow[-2], (int, float))
         and peak_flow[-1] > peak_flow[-2]
@@ -1171,12 +1164,10 @@ elif page == "Reports":
         if len(peak_flow) > 1
         and isinstance(peak_flow[-1], (int, float))
         and isinstance(peak_flow[-2], (int, float))
-        and peak_flow[-1] < peak_flow[-2]
         else "-"
     )
     hba1c_trend = (
-        "↑"
-        if len(hba1c) > 1
+        "↑" if len(hba1c) > 1
         and isinstance(hba1c[-1], (int, float))
         and isinstance(hba1c[-2], (int, float))
         and hba1c[-1] > hba1c[-2]
@@ -1184,7 +1175,6 @@ elif page == "Reports":
         if len(hba1c) > 1
         and isinstance(hba1c[-1], (int, float))
         and isinstance(hba1c[-2], (int, float))
-        and hba1c[-1] < hba1c[-2]
         else "-"
     )
 
@@ -1366,12 +1356,12 @@ elif page == "Reports":
     # Helper function to determine metric status
     def get_metric_status(value, low, high):
         """Return color and status based on value range."""
-        if value is not None and low <= value <= high:
+        if value is None:
+            return "⚠️ No Data", "gray"
+        elif low <= value <= high:
             return "✅ Normal", "green"
-        elif value is not None:
-            return "⚠️ Abnormal", "red"
         else:
-            return "-", "gray"
+            return "⚠️ Abnormal", "red"
 
     hr_status, hr_color = get_metric_status(heart_rates[-1], 60, 100) if heart_rates else ("-", "gray")
     glucose_status, glucose_color = get_metric_status(glucose_levels[-1], 70, 140) if glucose_levels else ("-", "gray")
