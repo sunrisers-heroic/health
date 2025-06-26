@@ -794,7 +794,7 @@ elif page == "Diseases":
     # Section Header
     st.markdown("""
     <p style="font-size: 18px; color: #34495e;">
-        Log and manage chronic conditions like diabetes, hypertension, and asthma.
+        Log and manage chronic conditions like diabetes, hypertension, and asthma. 
     </p>
     """, unsafe_allow_html=True)
     
