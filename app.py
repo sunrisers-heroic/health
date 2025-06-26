@@ -1234,7 +1234,8 @@ elif page == "Reports":
             file_name="health_metrics.csv",
             mime="text/csv"
         )
-
+    # Step 5: Visualize Historical Data
+    st.subheader("Step 5: Visualize Historical Data")
     # Footer
     lang = st.session_state.language
     st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
