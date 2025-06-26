@@ -1356,6 +1356,7 @@ elif page == "Reports":
 
     # Metrics Summary Section
     st.subheader("Metrics Summary")
+    # Key Health Indicators with Trend Deltas
     heart_rates = st.session_state.analytics_data.get("heart_rates", [])
     glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
     bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
