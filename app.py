@@ -1198,7 +1198,9 @@ elif page == "Reports":
             mime="text/csv"
         )
 
-  
+    # Footer
+    lang = st.session_state.language
+    st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
     
     # Debug Mode
     with st.expander("🔧 Debug Mode"):
