@@ -1236,8 +1236,41 @@ elif page == "Reports":
         except Exception as e:
             st.error(f"🚨 Error generating AI summary: {str(e)}")
 
-    # Step 5: Visualize Historical Data with Enhanced Features
+      # Step 5: Visualize Historical Data
     st.subheader("Step 5: Visualize Historical Data")
+    
+    # Ensure session state analytics data exists
+    if "analytics_data" not in st.session_state:
+        st.session_state.analytics_data = {
+            "dates": [datetime.now().strftime("%Y-%m-%d")],
+            "heart_rates": [72],
+            "glucose_levels": [90],
+            "blood_pressure_systolic": [120],
+            "blood_pressure_diastolic": [80],
+            "peak_flow": [400],
+            "hba1c": [5.7],
+            "symptoms": ["Headache", "Fatigue", "Nausea"],
+            "symptom_frequency": [3, 2, 1],  # Example symptom frequencies
+        }
+    
+    # Ensure all lists in analytics_data are the same length
+    def pad_or_truncate_lists(data_dict):
+        """Ensure all lists in the dictionary are of the same length."""
+        max_length = max(len(lst) for lst in data_dict.values())
+        for key in data_dict:
+            current_length = len(data_dict[key])
+            if current_length < max_length:
+                # Pad with None if the list is shorter
+                data_dict[key].extend([None] * (max_length - current_length))
+            elif current_length > max_length:
+                # Truncate if the list is longer
+                data_dict[key] = data_dict[key][:max_length]
+        return data_dict
+    
+    # Apply padding/truncation to analytics_data
+    st.session_state.analytics_data = pad_or_truncate_lists(st.session_state.analytics_data)
+    
+    # Visualization Type Selection
     visualization_type = st.selectbox(
         "Select Metric to Visualize",
         [
@@ -1247,103 +1280,123 @@ elif page == "Reports":
             "Symptom Frequency Pie Chart",
         ]
     )
-
+    
     # Heart Rate Trend Line Chart
     if visualization_type == "Heart Rate Trend":
         heart_rates = st.session_state.analytics_data.get("heart_rates", [])
         dates = st.session_state.analytics_data.get("dates", [])
-        df_hr = pd.DataFrame({"Date": dates, "Heart Rate (bpm)": heart_rates})
-        fig_hr = px.line(
-            df_hr,
-            x="Date",
-            y="Heart Rate (bpm)",
-            title="Heart Rate Trend Over Time",
-            labels={"Heart Rate (bpm)": "Heart Rate (bpm)"},
-        )
-        fig_hr.update_traces(mode="lines+markers", hovertemplate="Date: %{x}<br>Heart Rate: %{y} bpm")
-        fig_hr.add_hline(
-            y=100,  # Example normal range upper limit
-            line_dash="dash",
-            line_color="red",
-            annotation_text="Normal Range Limit",
-            annotation_position="top right",
-        )
-        st.plotly_chart(fig_hr, use_container_width=True)
-
+    
+        # Ensure both lists are the same length before creating DataFrame
+        if len(heart_rates) != len(dates):
+            st.error("🚨 Data inconsistency detected. Please log metrics again.")
+        else:
+            df_hr = pd.DataFrame({"Date": dates, "Heart Rate (bpm)": heart_rates})
+            fig_hr = px.line(
+                df_hr,
+                x="Date",
+                y="Heart Rate (bpm)",
+                title="Heart Rate Trend Over Time",
+                labels={"Heart Rate (bpm)": "Heart Rate (bpm)"},
+            )
+            fig_hr.update_traces(mode="lines+markers", hovertemplate="Date: %{x}<br>Heart Rate: %{y} bpm")
+            fig_hr.add_hline(
+                y=100,  # Example normal range upper limit
+                line_dash="dash",
+                line_color="red",
+                annotation_text="Normal Range Limit",
+                annotation_position="top right",
+            )
+            st.plotly_chart(fig_hr, use_container_width=True)
+    
     # Blood Pressure Dual-Line Chart
     elif visualization_type == "Blood Pressure Dual-Line":
         bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
         bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
         dates = st.session_state.analytics_data.get("dates", [])
-        df_bp = pd.DataFrame(
-            {"Date": dates, "Systolic BP (mmHg)": bp_systolic, "Diastolic BP (mmHg)": bp_diastolic}
-        )
-        fig_bp = px.line(
-            df_bp,
-            x="Date",
-            y=["Systolic BP (mmHg)", "Diastolic BP (mmHg)"],
-            title="Blood Pressure Trends Over Time",
-            labels={"value": "Pressure (mmHg)"},
-        )
-        fig_bp.update_traces(mode="lines+markers", hovertemplate="Date: %{x}<br>Pressure: %{y} mmHg")
-        fig_bp.add_hrect(
-            y0=120,
-            y1=140,
-            line_width=0,
-            fillcolor="red",
-            opacity=0.2,
-            annotation_text="Normal Systolic Range",
-        )
-        fig_bp.add_hrect(
-            y0=80,
-            y1=90,
-            line_width=0,
-            fillcolor="blue",
-            opacity=0.2,
-            annotation_text="Normal Diastolic Range",
-        )
-        st.plotly_chart(fig_bp, use_container_width=True)
-
+    
+        # Ensure all lists are the same length before creating DataFrame
+        if len(bp_systolic) != len(dates) or len(bp_diastolic) != len(dates):
+            st.error("🚨 Data inconsistency detected. Please log metrics again.")
+        else:
+            df_bp = pd.DataFrame(
+                {"Date": dates, "Systolic BP (mmHg)": bp_systolic, "Diastolic BP (mmHg)": bp_diastolic}
+            )
+            fig_bp = px.line(
+                df_bp,
+                x="Date",
+                y=["Systolic BP (mmHg)", "Diastolic BP (mmHg)"],
+                title="Blood Pressure Trends Over Time",
+                labels={"value": "Pressure (mmHg)"},
+            )
+            fig_bp.update_traces(mode="lines+markers", hovertemplate="Date: %{x}<br>Pressure: %{y} mmHg")
+            fig_bp.add_hrect(
+                y0=120,
+                y1=140,
+                line_width=0,
+                fillcolor="red",
+                opacity=0.2,
+                annotation_text="Normal Systolic Range",
+            )
+            fig_bp.add_hrect(
+                y0=80,
+                y1=90,
+                line_width=0,
+                fillcolor="blue",
+                opacity=0.2,
+                annotation_text="Normal Diastolic Range",
+            )
+            st.plotly_chart(fig_bp, use_container_width=True)
+    
     # Blood Glucose Trend Line Chart with Reference Line
     elif visualization_type == "Blood Glucose Trend with Reference Line":
         glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
         dates = st.session_state.analytics_data.get("dates", [])
-        df_gluc = pd.DataFrame({"Date": dates, "Blood Glucose (mg/dL)": glucose_levels})
-        fig_gluc = px.line(
-            df_gluc,
-            x="Date",
-            y="Blood Glucose (mg/dL)",
-            title="Blood Glucose Trend Over Time",
-            labels={"Blood Glucose (mg/dL)": "Blood Glucose (mg/dL)"},
-        )
-        fig_gluc.update_traces(mode="lines+markers", hovertemplate="Date: %{x}<br>Glucose: %{y} mg/dL")
-        fig_gluc.add_hline(
-            y=140,  # Example reference line for normal glucose level
-            line_dash="dash",
-            line_color="green",
-            annotation_text="Normal Glucose Limit",
-            annotation_position="top right",
-        )
-        st.plotly_chart(fig_gluc, use_container_width=True)
-
+    
+        # Ensure both lists are the same length before creating DataFrame
+        if len(glucose_levels) != len(dates):
+            st.error("🚨 Data inconsistency detected. Please log metrics again.")
+        else:
+            df_gluc = pd.DataFrame({"Date": dates, "Blood Glucose (mg/dL)": glucose_levels})
+            fig_gluc = px.line(
+                df_gluc,
+                x="Date",
+                y="Blood Glucose (mg/dL)",
+                title="Blood Glucose Trend Over Time",
+                labels={"Blood Glucose (mg/dL)": "Blood Glucose (mg/dL)"},
+            )
+            fig_gluc.update_traces(mode="lines+markers", hovertemplate="Date: %{x}<br>Glucose: %{y} mg/dL")
+            fig_gluc.add_hline(
+                y=140,  # Example reference line for normal glucose level
+                line_dash="dash",
+                line_color="green",
+                annotation_text="Normal Glucose Limit",
+                annotation_position="top right",
+            )
+            st.plotly_chart(fig_gluc, use_container_width=True)
+    
     # Symptom Frequency Pie Chart
     elif visualization_type == "Symptom Frequency Pie Chart":
         symptoms = st.session_state.analytics_data.get("symptoms", [])
         symptom_frequency = st.session_state.analytics_data.get("symptom_frequency", [])
-        df_symptoms = pd.DataFrame({"Symptom": symptoms, "Frequency": symptom_frequency})
-        fig_pie = px.pie(
-            df_symptoms,
-            names="Symptom",
-            values="Frequency",
-            title="Symptom Frequency Distribution",
-            hole=0.3,  # Donut chart style
-        )
-        fig_pie.update_traces(
-            textposition="inside",
-            textinfo="percent+label",
-            hovertemplate="Symptom: %{label}<br>Frequency: %{value}",
-        )
-        st.plotly_chart(fig_pie, use_container_width=True)
+    
+        # Ensure both lists are the same length before creating DataFrame
+        if len(symptoms) != len(symptom_frequency):
+            st.error("🚨 Data inconsistency detected. Please log metrics again.")
+        else:
+            df_symptoms = pd.DataFrame({"Symptom": symptoms, "Frequency": symptom_frequency})
+            fig_pie = px.pie(
+                df_symptoms,
+                names="Symptom",
+                values="Frequency",
+                title="Symptom Frequency Distribution",
+                hole=0.3,  # Donut chart style
+            )
+            fig_pie.update_traces(
+                textposition="inside",
+                textinfo="percent+label",
+                hovertemplate="Symptom: %{label}<br>Frequency: %{value}",
+            )
+            st.plotly_chart(fig_pie, use_container_width=True)
 
     # Metrics Summary Section
     st.subheader("Metrics Summary")
