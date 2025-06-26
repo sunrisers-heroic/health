@@ -367,7 +367,6 @@ if page == "Profile":
 
 
 
-
 elif page == "Chat":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🗨️ Chat Interface")
@@ -386,14 +385,23 @@ elif page == "Chat":
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
     for role, message in st.session_state.messages:
         if role == "user":
-            st.markdown(f'<div class="user-bubble">{message}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="user-bubble"><strong>You:</strong><br>{message}</div>', unsafe_allow_html=True)
         elif role == "assistant":
-            st.markdown(f'<div class="bot-bubble">{message}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="bot-bubble"><strong>Assistant:</strong><br>{message}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
     # User Input
-    user_input = st.text_input("Ask your question here:", placeholder="Type your query...")
-    if st.button("Send", key="send_message"):
+    st.markdown('<div class="input-container">', unsafe_allow_html=True)
+    user_input = st.text_input("Ask your question here:", placeholder="Type your query...", key="user_input")
+    col1, col2 = st.columns([1, 6])
+    with col1:
+        send_button = st.button("Send", key="send_message")
+    with col2:
+        clear_button = st.button("Clear Chat", key="clear_chat")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Handle Send Button
+    if send_button:
         if user_input.strip() == "":
             st.warning("Please enter a valid query.")
         else:
@@ -429,8 +437,8 @@ elif page == "Chat":
             except Exception as e:
                 st.error(f"🚨 Error generating response: {str(e)}")
 
-    # Clear Chat History Button
-    if st.button("🔄 Clear Chat History", key="clear_chat"):
+    # Handle Clear Chat Button
+    if clear_button:
         st.session_state.messages = []
         st.success("Chat history cleared successfully!")
 
