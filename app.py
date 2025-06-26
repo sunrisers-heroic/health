@@ -1023,11 +1023,9 @@ elif page == "Diseases":
 
 
 
-
 elif page == "Reports":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 📊 Ultimate Health Analytics Dashboard")
-    
     # Section Header
     st.markdown("""
     <p style="font-size: 18px; color: #34495e;">
@@ -1044,7 +1042,9 @@ elif page == "Reports":
             "blood_pressure_systolic": [120],
             "blood_pressure_diastolic": [80],
             "peak_flow": [400],
-            "hba1c": [5.7]
+            "hba1c": [5.7],
+            "symptoms": ["Headache", "Fatigue", "Nausea"],
+            "symptom_frequency": [3, 2, 1],  # Example symptom frequencies
         }
 
     # Ensure all lists in analytics_data are the same length
@@ -1067,7 +1067,6 @@ elif page == "Reports":
     # Step 1: Log New Metrics
     st.subheader("Step 1: Log New Health Metrics")
     col1, col2 = st.columns(2)
-
     with col1:
         metric_type = st.selectbox(
             "Select Metric Type",
@@ -1136,10 +1135,58 @@ elif page == "Reports":
 
     # Step 3: Trend Analysis
     st.subheader("### 📈 Trend Analysis")
-    hr_trend = "↑" if len(heart_rates) > 1 and isinstance(heart_rates[-1], (int, float)) and isinstance(heart_rates[-2], (int, float)) and heart_rates[-1] > heart_rates[-2] else "↓" if len(heart_rates) > 1 and isinstance(heart_rates[-1], (int, float)) and isinstance(heart_rates[-2], (int, float)) else "-"
-    glucose_trend = "↑" if len(glucose_levels) > 1 and isinstance(glucose_levels[-1], (int, float)) and isinstance(glucose_levels[-2], (int, float)) and glucose_levels[-1] > glucose_levels[-2] else "↓" if len(glucose_levels) > 1 and isinstance(glucose_levels[-1], (int, float)) and isinstance(glucose_levels[-2], (int, float)) else "-"
-    peak_trend = "↑" if len(peak_flow) > 1 and isinstance(peak_flow[-1], (int, float)) and isinstance(peak_flow[-2], (int, float)) and peak_flow[-1] > peak_flow[-2] else "↓" if len(peak_flow) > 1 and isinstance(peak_flow[-1], (int, float)) and isinstance(peak_flow[-2], (int, float)) else "-"
-    hba1c_trend = "↑" if len(hba1c) > 1 and isinstance(hba1c[-1], (int, float)) and isinstance(hba1c[-2], (int, float)) and hba1c[-1] > hba1c[-2] else "↓" if len(hba1c) > 1 and isinstance(hba1c[-1], (int, float)) and isinstance(hba1c[-2], (int, float)) else "-"
+    hr_trend = (
+        "↑"
+        if len(heart_rates) > 1
+        and isinstance(heart_rates[-1], (int, float))
+        and isinstance(heart_rates[-2], (int, float))
+        and heart_rates[-1] > heart_rates[-2]
+        else "↓"
+        if len(heart_rates) > 1
+        and isinstance(heart_rates[-1], (int, float))
+        and isinstance(heart_rates[-2], (int, float))
+        and heart_rates[-1] < heart_rates[-2]
+        else "-"
+    )
+    glucose_trend = (
+        "↑"
+        if len(glucose_levels) > 1
+        and isinstance(glucose_levels[-1], (int, float))
+        and isinstance(glucose_levels[-2], (int, float))
+        and glucose_levels[-1] > glucose_levels[-2]
+        else "↓"
+        if len(glucose_levels) > 1
+        and isinstance(glucose_levels[-1], (int, float))
+        and isinstance(glucose_levels[-2], (int, float))
+        and glucose_levels[-1] < glucose_levels[-2]
+        else "-"
+    )
+    peak_trend = (
+        "↑"
+        if len(peak_flow) > 1
+        and isinstance(peak_flow[-1], (int, float))
+        and isinstance(peak_flow[-2], (int, float))
+        and peak_flow[-1] > peak_flow[-2]
+        else "↓"
+        if len(peak_flow) > 1
+        and isinstance(peak_flow[-1], (int, float))
+        and isinstance(peak_flow[-2], (int, float))
+        and peak_flow[-1] < peak_flow[-2]
+        else "-"
+    )
+    hba1c_trend = (
+        "↑"
+        if len(hba1c) > 1
+        and isinstance(hba1c[-1], (int, float))
+        and isinstance(hba1c[-2], (int, float))
+        and hba1c[-1] > hba1c[-2]
+        else "↓"
+        if len(hba1c) > 1
+        and isinstance(hba1c[-1], (int, float))
+        and isinstance(hba1c[-2], (int, float))
+        and hba1c[-1] < hba1c[-2]
+        else "-"
+    )
 
     st.markdown(f"""
     <div class="metric-card">
@@ -1192,43 +1239,14 @@ elif page == "Reports":
                 response = llm.invoke(prompt).strip()
             if not response or "error" in response.lower():
                 response = "I'm unable to generate a health summary at this time due to technical issues. Please try again later."
-            
             st.markdown("### 🧠 AI Health Analysis")
             st.markdown(response)
             ai_summary = response
         except Exception as e:
             st.error(f"🚨 Error generating AI summary: {str(e)}")
+
     # Step 5: Visualize Historical Data with Enhanced Features
     st.subheader("Step 5: Visualize Historical Data")
-    
-    # Ensure session state analytics data exists
-    if "analytics_data" not in st.session_state:
-        st.session_state.analytics_data = {
-            "dates": [datetime.now().strftime("%Y-%m-%d")],
-            "heart_rates": [72],
-            "glucose_levels": [90],
-            "blood_pressure_systolic": [120],
-            "blood_pressure_diastolic": [80],
-            "symptoms": ["Headache", "Fatigue", "Nausea"],
-            "symptom_frequency": [3, 2, 1],  # Example symptom frequencies
-        }
-    
-    # Ensure all lists in analytics_data are the same length
-    def pad_or_truncate_lists(data_dict):
-        """Ensure all lists in the dictionary are of the same length."""
-        max_length = max(len(lst) for lst in data_dict.values())
-        for key in data_dict:
-            current_length = len(data_dict[key])
-            if current_length < max_length:
-                data_dict[key].extend([None] * (max_length - current_length))
-            elif current_length > max_length:
-                data_dict[key] = data_dict[key][:max_length]
-        return data_dict
-    
-    # Apply padding/truncation to analytics_data
-    st.session_state.analytics_data = pad_or_truncate_lists(st.session_state.analytics_data)
-    
-    # Visualization Type Selection
     visualization_type = st.selectbox(
         "Select Metric to Visualize",
         [
@@ -1238,13 +1256,12 @@ elif page == "Reports":
             "Symptom Frequency Pie Chart",
         ]
     )
-    
+
     # Heart Rate Trend Line Chart
     if visualization_type == "Heart Rate Trend":
         heart_rates = st.session_state.analytics_data.get("heart_rates", [])
         dates = st.session_state.analytics_data.get("dates", [])
         df_hr = pd.DataFrame({"Date": dates, "Heart Rate (bpm)": heart_rates})
-    
         fig_hr = px.line(
             df_hr,
             x="Date",
@@ -1261,7 +1278,7 @@ elif page == "Reports":
             annotation_position="top right",
         )
         st.plotly_chart(fig_hr, use_container_width=True)
-    
+
     # Blood Pressure Dual-Line Chart
     elif visualization_type == "Blood Pressure Dual-Line":
         bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
@@ -1270,7 +1287,6 @@ elif page == "Reports":
         df_bp = pd.DataFrame(
             {"Date": dates, "Systolic BP (mmHg)": bp_systolic, "Diastolic BP (mmHg)": bp_diastolic}
         )
-    
         fig_bp = px.line(
             df_bp,
             x="Date",
@@ -1296,13 +1312,12 @@ elif page == "Reports":
             annotation_text="Normal Diastolic Range",
         )
         st.plotly_chart(fig_bp, use_container_width=True)
-    
+
     # Blood Glucose Trend Line Chart with Reference Line
     elif visualization_type == "Blood Glucose Trend with Reference Line":
         glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
         dates = st.session_state.analytics_data.get("dates", [])
         df_gluc = pd.DataFrame({"Date": dates, "Blood Glucose (mg/dL)": glucose_levels})
-    
         fig_gluc = px.line(
             df_gluc,
             x="Date",
@@ -1319,13 +1334,12 @@ elif page == "Reports":
             annotation_position="top right",
         )
         st.plotly_chart(fig_gluc, use_container_width=True)
-    
+
     # Symptom Frequency Pie Chart
     elif visualization_type == "Symptom Frequency Pie Chart":
         symptoms = st.session_state.analytics_data.get("symptoms", [])
         symptom_frequency = st.session_state.analytics_data.get("symptom_frequency", [])
         df_symptoms = pd.DataFrame({"Symptom": symptoms, "Frequency": symptom_frequency})
-    
         fig_pie = px.pie(
             df_symptoms,
             names="Symptom",
@@ -1339,66 +1353,26 @@ elif page == "Reports":
             hovertemplate="Symptom: %{label}<br>Frequency: %{value}",
         )
         st.plotly_chart(fig_pie, use_container_width=True)
-    
+
     # Metrics Summary Section
     st.subheader("Metrics Summary")
-    
-    # Key Health Indicators with Trend Deltas
     heart_rates = st.session_state.analytics_data.get("heart_rates", [])
     glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
     bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
     bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
-    
-    hr_trend = (
-        "↑"
-        if len(heart_rates) > 1
-        and isinstance(heart_rates[-1], (int, float))
-        and isinstance(heart_rates[-2], (int, float))
-        and heart_rates[-1] > heart_rates[-2]
-        else "↓"
-        if len(heart_rates) > 1
-        and isinstance(heart_rates[-1], (int, float))
-        and isinstance(heart_rates[-2], (int, float))
-        else "-"
-    )
-    glucose_trend = (
-        "↑"
-        if len(glucose_levels) > 1
-        and isinstance(glucose_levels[-1], (int, float))
-        and isinstance(glucose_levels[-2], (int, float))
-        and glucose_levels[-1] > glucose_levels[-2]
-        else "↓"
-        if len(glucose_levels) > 1
-        and isinstance(glucose_levels[-1], (int, float))
-        and isinstance(glucose_levels[-2], (int, float))
-        else "-"
-    )
-    bp_trend = (
-        "↑"
-        if len(bp_systolic) > 1
-        and isinstance(bp_systolic[-1], (int, float))
-        and isinstance(bp_systolic[-2], (int, float))
-        and bp_systolic[-1] > bp_systolic[-2]
-        else "↓"
-        if len(bp_systolic) > 1
-        and isinstance(bp_systolic[-1], (int, float))
-        and isinstance(bp_systolic[-2], (int, float))
-        else "-"
-    )
-    
-    # Color-Coded Metrics
+
+    # Helper function to determine metric status
     def get_metric_status(value, low, high):
         """Return color and status based on value range."""
         if low <= value <= high:
             return "✅ Normal", "green"
         else:
             return "⚠️ Abnormal", "red"
-    
+
     hr_status, hr_color = get_metric_status(heart_rates[-1], 60, 100) if heart_rates else ("-", "gray")
     glucose_status, glucose_color = get_metric_status(glucose_levels[-1], 70, 140) if glucose_levels else ("-", "gray")
     bp_status, bp_color = get_metric_status(bp_systolic[-1], 90, 120) if bp_systolic else ("-", "gray")
-    
-    # Display Metrics Summary
+
     st.markdown(
         f"""
         <div style="display: flex; justify-content: space-between; margin-top: 20px;">
@@ -1417,7 +1391,7 @@ elif page == "Reports":
             <div style="background-color: {bp_color}; padding: 10px; border-radius: 5px; text-align: center;">
                 <strong>Blood Pressure</strong><br>
                 Value: {bp_systolic[-1]}/{bp_diastolic[-1] if bp_diastolic else 'N/A'} mmHg<br>
-                Trend: {bp_trend}<br>
+                Trend: {hr_trend}<br>
                 Status: {bp_status}
             </div>
         </div>
@@ -1425,6 +1399,46 @@ elif page == "Reports":
         unsafe_allow_html=True,
     )
 
+    # Step 6: Export Report
+    st.subheader("Step 6: Export Report")
+    if st.session_state.profile_complete:
+        # Export PDF
+        pdf_data = export_health_report(ai_summary=ai_summary)
+        st.download_button(
+            label="📄 Export Report as PDF",
+            data=pdf_data,
+            file_name="health_report.pdf",
+            mime="application/pdf"
+        )
+        # Export CSV
+        csv_data = ""
+        metrics_df = pd.DataFrame({
+            "Date": dates,
+            "Heart Rate (bpm)": heart_rates,
+            "Blood Glucose (mg/dL)": glucose_levels,
+            "Systolic BP (mmHg)": st.session_state.analytics_data.get("blood_pressure_systolic", []),
+            "Diastolic BP (mmHg)": st.session_state.analytics_data.get("blood_pressure_diastolic", []),
+            "Peak Flow (L/min)": peak_flow,
+            "HbA1c (%)": hba1c
+        })
+        csv_data = metrics_df.to_csv(index=False)
+        st.download_button(
+            label="💾 Export Metrics as CSV",
+            data=csv_data,
+            file_name="health_metrics.csv",
+            mime="text/csv"
+        )
+    else:
+        st.warning("⚠️ Complete your profile to enable report export.")
+
+    # Footer
+    lang = st.session_state.language
+    st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
+
+    # Debug Mode
+    with st.expander("🔧 Debug Mode"):
+        st.write("Session State:", st.session_state)
+    st.markdown('</div>', unsafe_allow_html=True)
  
 
 
