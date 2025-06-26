@@ -1172,7 +1172,7 @@ elif page == "Reports":
 
         # Export as CSV
         csv_data = ""
-        if st.session_state.analytics_
+        if st.session_state.analytics_data:
             metrics_df = pd.DataFrame({
                 "Date": dates,
                 "Heart Rate (bpm)": heart_rates,
