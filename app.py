@@ -1323,7 +1323,9 @@ elif page == "Settings":
     # Step 2: Language Preferences
     st.subheader("Step 2: Language Preferences")
     lang_options = {
-       
+       "English": "en",
+        "Español": "es",
+        "Français": "fr"
     }
     selected_lang = st.selectbox(
         "Select App Language",
