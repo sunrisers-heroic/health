@@ -1174,77 +1174,6 @@ elif page == "Reports":
         }
         st.success("All logs have been reset.")
     
-    # Step 6: Advanced Analytics
-    st.subheader("Step 6: Advanced Analytics")
-    if st.checkbox("Show Advanced Analytics"):
-        st.markdown("#### Correlation Matrix")
-        numeric_columns = [
-            "Heart Rate (bpm)",
-            "Blood Glucose (mg/dL)",
-            "Systolic BP (mmHg)",
-            "Diastolic BP (mmHg)",
-            "Peak Flow (L/min)",
-            "HbA1c (%)"
-        ]
-        corr_df = metrics_df[numeric_columns].corr()
-        fig_corr = px.imshow(corr_df, text_auto=True, title="Correlation Matrix")
-        st.plotly_chart(fig_corr, use_container_width=True)
-        
-        st.markdown("#### Metric Distribution")
-        metric_to_analyze = st.selectbox("Select Metric for Distribution", numeric_columns)
-        fig_dist = px.histogram(metrics_df, x=metric_to_analyze, nbins=20, title=f"Distribution of {metric_to_analyze}")
-        st.plotly_chart(fig_dist, use_container_width=True)
-    
-    # Step 7: Predictive Analytics
-    st.subheader("Step 7: Predictive Analytics")
-    if st.checkbox("Enable Predictive Analytics"):
-        st.markdown("#### Forecasting Future Trends")
-        forecast_metric = st.selectbox("Select Metric for Forecasting", numeric_columns)
-        if forecast_metric:
-            try:
-                from statsmodels.tsa.holtwinters import ExponentialSmoothing
-                
-                # Prepare data for forecasting
-                ts_data = metrics_df.set_index("Date")[forecast_metric]
-                ts_data.index = pd.to_datetime(ts_data.index)
-                model = ExponentialSmoothing(ts_data, seasonal="add", seasonal_periods=7)
-                hw_model = model.fit()
-                forecast = hw_model.forecast(steps=7)
-                
-                # Plot forecast
-                fig_forecast = px.line(
-                    title=f"Forecast for {forecast_metric}",
-                    labels={"value": forecast_metric, "index": "Date"}
-                )
-                fig_forecast.add_scatter(x=ts_data.index, y=ts_data, mode="lines", name="Historical Data")
-                fig_forecast.add_scatter(x=forecast.index, y=forecast, mode="lines", name="Forecasted Data")
-                st.plotly_chart(fig_forecast, use_container_width=True)
-            except Exception as e:
-                st.error(f"🚨 Error generating forecast: {str(e)}")
-    
-    # Step 8: Risk Assessment
-    st.subheader("Step 8: Risk Assessment")
-    if st.checkbox("Perform Risk Assessment"):
-        risk_prompt = f"""
-        Based on the patient's latest metrics and trends:
-        - Heart Rate: {st.session_state.analytics_data['heart_rates'][-1]} bpm
-        - Blood Glucose: {st.session_state.analytics_data['glucose_levels'][-1]} mg/dL
-        - Blood Pressure: {st.session_state.analytics_data['blood_pressure_systolic'][-1]}/{st.session_state.analytics_data['blood_pressure_diastolic'][-1]} mmHg
-        - Peak Flow: {st.session_state.analytics_data['peak_flow'][-1]} L/min
-        - HbA1c: {st.session_state.analytics_data['hba1c'][-1]}%
-
-        Assess the risk of developing chronic conditions like diabetes, hypertension, or cardiovascular diseases.
-        Provide a risk score (low, medium, high) and recommendations to mitigate risks.
-        """
-        try:
-            llm = get_llm("reports")
-            with st.spinner("🧠 Performing risk assessment..."):
-                risk_response = llm.invoke(risk_prompt).strip()
-            st.markdown("### 🚨 Risk Assessment Results")
-            st.markdown(risk_response)
-        except Exception as e:
-            st.error(f"🚨 Error performing risk assessment: {str(e)}")
-    
     # Footer
     lang = st.session_state.language
     st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
@@ -1254,7 +1183,6 @@ elif page == "Reports":
         st.write("Session State:", st.session_state)
 
     st.markdown('</div>', unsafe_allow_html=True)
-
 
 
 
