@@ -368,12 +368,107 @@ if page == "Profile":
 
 
 
-
 elif page == "Chat":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🗨️ Chat Interface")
-    # Existing chat logic here
+    
+    # Section Header
+    st.markdown("""
+    <p style="font-size: 18px; color: #34495e;">
+        Interact with our AI-powered health assistant for personalized advice and answers to your health queries.
+    </p>
+    """, unsafe_allow_html=True)
+    
+    # Display Chat History
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+    for role, message in st.session_state.messages:
+        if role == "user":
+            st.markdown(f'<div class="user-bubble">{message}</div>', unsafe_allow_html=True)
+        elif role == "assistant":
+            st.markdown(f'<div class="bot-bubble">{message}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
+
+    # User Input
+    user_input = st.text_input("Ask your question here:", placeholder="Type your query...")
+    if st.button("Send", key="send_message"):
+        if user_input.strip() == "":
+            st.warning("Please enter a valid query.")
+        else:
+            # Add user message to chat history
+            st.session_state.messages.append(("user", user_input))
+
+            # Generate AI response
+            try:
+                llm = get_llm("chat")
+                profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
+                chat_history = ''.join([f'{r.capitalize()}: {c}' for r, c in st.session_state.messages[-6:]])
+                prompt = f"""
+                You are a professional medical assistant AI helping a patient with their health queries.
+                Use the following guidelines:
+                - Be empathetic, informative, and clear.
+                - Always mention that you're not a substitute for real medical advice.
+                - If unsure, recommend consulting a physician.
+
+                Patient Profile: {profile_info}
+                Chat History: {chat_history}
+                User Question: "{user_input}"
+
+                Answer:
+                """
+                with st.spinner("🧠 Generating response..."):
+                    response = llm.invoke(prompt).strip()
+                if not response or "error" in response.lower():
+                    response = "I'm unable to respond at this time due to technical issues. Please try again later."
+                
+                # Add assistant response to chat history
+                st.session_state.messages.append(("assistant", response))
+                st.rerun()
+            except Exception as e:
+                st.error(f"🚨 Error generating response: {str(e)}")
+
+    # Clear Chat History Button
+    if st.button("🔄 Clear Chat History", key="clear_chat"):
+        st.session_state.messages = []
+        st.success("Chat history cleared successfully!")
+
+    # Export Chat History Button
+    if st.session_state.messages:
+        chat_log = "\n".join([f"{role.capitalize()}: {msg}" for role, msg in st.session_state.messages])
+        st.download_button(
+            label="Export Chat Log",
+            data=chat_log,
+            file_name="chat_log.txt",
+            mime="text/plain"
+        )
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 elif page == "Symptoms":
     st.markdown('<div class="card">', unsafe_allow_html=True)
