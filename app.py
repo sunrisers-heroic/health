@@ -178,7 +178,7 @@ except Exception as e:
 
 
 
-def export_health_report(ai_summary=ai_summary):
+def export_health_report(ai_summary=""):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
