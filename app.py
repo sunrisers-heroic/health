@@ -592,7 +592,7 @@ elif page == "Treatment":
     # Section Header
     st.markdown("""
     <p style="font-size: 18px; color: #34495e;">
-        Create a personalized treatment plan based on your condition and duration.
+        Create a personalized, phase-wise treatment plan based on your condition and duration.
     </p>
     """, unsafe_allow_html=True)
     
@@ -625,15 +625,15 @@ elif page == "Treatment":
             # Prepare Prompt for LLM
             try:
                 llm = get_llm("treatment")
-                profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
+                profile_name = st.session_state.profile_data.get("name", "Unknown")
                 prompt = f"""
-                You are a professional medical assistant AI creating a personalized treatment plan.
+                You are a professional medical assistant AI creating a personalized, phase-wise treatment plan.
                 Use the following guidelines:
                 - Be empathetic, informative, and clear.
                 - Always mention that you're not a substitute for real medical advice.
                 - If unsure, recommend consulting a physician.
 
-                Patient Profile: {profile_info}
+                Patient Name: {profile_name}
                 Condition: {condition}
                 Duration: {duration}
                 Severity: {severity}
@@ -641,18 +641,29 @@ elif page == "Treatment":
                 Pre-existing Conditions: {', '.join(medical_conditions) if medical_conditions else 'None'}
                 Current Medications: {medications}
 
-                Provide a detailed treatment plan including:
-                1. Medications (with dosages and frequency).
-                2. Lifestyle modifications.
-                3. Follow-up care recommendations.
-                4. Potential complications to monitor.
+                Provide a detailed, phase-wise treatment plan including:
+                ### Phase 1: Immediate Actions
+                - Medications (with dosages and frequency).
+                - Lifestyle modifications.
+
+                ### Phase 2: Short-Term Goals (1-2 weeks)
+                - Follow-up care recommendations.
+                - Monitoring parameters.
+
+                ### Phase 3: Long-Term Management (Beyond 2 weeks)
+                - Sustained lifestyle changes.
+                - Potential complications to monitor.
 
                 Output format:
-                ### 🩺 Treatment Plan
-                - **Medications**: [List medications with dosages]
-                - **Lifestyle Modifications**: [Provide actionable advice]
-                - **Follow-up Care**: [Specify when and how often to follow up]
-                - **Complications to Monitor**: [List potential risks]
+                ### 🩺 Personalized Treatment Plan for {profile_name}
+                #### Phase 1: Immediate Actions
+                - [Provide actionable steps]
+
+                #### Phase 2: Short-Term Goals
+                - [Provide short-term goals]
+
+                #### Phase 3: Long-Term Management
+                - [Provide long-term strategies]
 
                 Answer:
                 """
@@ -662,7 +673,7 @@ elif page == "Treatment":
                 if not response or "error" in response.lower():
                     response = "I'm unable to generate a treatment plan at this time due to technical issues. Please try again later."
                 
-                st.markdown("### 🩺 Personalized Treatment Plan")
+                st.markdown(f"### 🩺 Personalized Treatment Plan for {profile_name}")
                 st.markdown(response)
             except Exception as e:
                 st.error(f"🚨 Error generating treatment plan: {str(e)}")
@@ -676,8 +687,91 @@ elif page == "Treatment":
             mime="text/plain"
         )
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Section: Log Daily Metrics
+    st.subheader("Step 3: Log Daily Metrics (Optional)")
+    metric_type = st.selectbox("Select Metric Type", ["Glucose Levels", "Blood Pressure", "Peak Flow", "HbA1c"])
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if metric_type == "Glucose Levels":
+            glucose_value = st.number_input("Glucose Level (mg/dL)", min_value=50, max_value=300, step=1)
+            glucose_date = st.date_input("Date", value=datetime.today())
+        elif metric_type == "Blood Pressure":
+            systolic = st.number_input("Systolic BP", min_value=90, max_value=200, step=1)
+            diastolic = st.number_input("Diastolic BP", min_value=60, max_value=130, step=1)
+            bp_date = st.date_input("Date", value=datetime.today())
+        elif metric_type == "Peak Flow":
+            peak_flow_value = st.number_input("Peak Flow (L/min)", min_value=100, max_value=800, step=1)
+            peak_flow_date = st.date_input("Date", value=datetime.today())
+        elif metric_type == "HbA1c":
+            hba1c_value = st.number_input("HbA1c (%)", min_value=4.0, max_value=12.0, step=0.1)
+            hba1c_date = st.date_input("Date", value=datetime.today())
+    
+    with col2:
+        if st.button("✅ Log Metric"):
+            if metric_type == "Glucose Levels":
+                st.session_state.glucose_log.append({"value": glucose_value, "date": glucose_date.strftime("%Y-%m-%d")})
+                st.success("Glucose level logged successfully!")
+            elif metric_type == "Blood Pressure":
+                st.session_state.bp_log.append({
+                    "systolic": systolic,
+                    "diastolic": diastolic,
+                    "date": bp_date.strftime("%Y-%m-%d")
+                })
+                st.success("Blood pressure logged successfully!")
+            elif metric_type == "Peak Flow":
+                st.session_state.asthma_log.append({
+                    "peak_flow": peak_flow_value,
+                    "date": peak_flow_date.strftime("%Y-%m-%d")
+                })
+                st.success("Peak flow logged successfully!")
+            elif metric_type == "HbA1c":
+                st.session_state.hba1c_log.append({
+                    "hba1c": hba1c_value,
+                    "date": hba1c_date.strftime("%Y-%m-%d")
+                })
+                st.success("HbA1c logged successfully!")
 
+    # Section: Historical Data Visualization
+    st.subheader("Step 4: Historical Data Visualization")
+    visualization_type = st.selectbox("Select Metric to Visualize", ["Glucose Levels", "Blood Pressure", "Peak Flow", "HbA1c"])
+    
+    if visualization_type == "Glucose Levels" and st.session_state.glucose_log:
+        df_gluc = pd.DataFrame(st.session_state.glucose_log)
+        fig = px.line(df_gluc, x='date', y='value', title='Glucose Levels Over Time')
+        fig.update_layout(yaxis_title="Glucose (mg/dL)", xaxis_title="Date")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    elif visualization_type == "Blood Pressure" and st.session_state.bp_log:
+        df_bp = pd.DataFrame(st.session_state.bp_log)
+        fig = px.line(df_bp, x='date', y=['systolic', 'diastolic'], title='Blood Pressure Over Time')
+        fig.update_layout(yaxis_title="Pressure (mmHg)", xaxis_title="Date")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    elif visualization_type == "Peak Flow" and st.session_state.asthma_log:
+        df_asthma = pd.DataFrame(st.session_state.asthma_log)
+        fig = px.line(df_asthma, x='date', y='peak_flow', title='Peak Flow Over Time')
+        fig.update_layout(yaxis_title="Peak Flow (L/min)", xaxis_title="Date")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    elif visualization_type == "HbA1c" and st.session_state.hba1c_log:
+        df_hba1c = pd.DataFrame(st.session_state.hba1c_log)
+        fig = px.line(df_hba1c, x='date', y='hba1c', title='HbA1c Over Time')
+        fig.update_layout(yaxis_title="HbA1c (%)", xaxis_title="Date")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Section: Reset Logs
+    st.subheader("Step 5: Reset Logged Metrics")
+    if st.button("🔄 Reset All Logs", key="reset_logs"):
+        st.session_state.glucose_log = []
+        st.session_state.bp_log = []
+        st.session_state.asthma_log = []
+        st.session_state.hba1c_log = []
+        st.success("All logs have been reset.")
+
+    # Footer
+    st.markdown('<footer>© Health Assistant 2023</footer>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 
