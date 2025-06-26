@@ -1200,7 +1200,7 @@ elif page == "Reports":
 
     # Footer
     lang = st.session_state.language
-    st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
+    st.markdown(f'Hello', unsafe_allow_html=True)
     
     # Debug Mode
     with st.expander("🔧 Debug Mode"):
