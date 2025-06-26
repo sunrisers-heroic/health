@@ -1,4 +1,4 @@
-# app.py  
+# app.py 
 
 # Importing Libraries
 import streamlit as st
@@ -478,41 +478,18 @@ elif page == "Chat":
                 profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
                 chat_history = ''.join([f'{r.capitalize()}: {c}' for r, c in st.session_state.messages[-6:]])
                 prompt = f"""
-                    You are a professional medical assistant AI creating a personalized, phase-wise treatment plan.
-                    Your goal is to provide a comprehensive, easy-to-follow guide tailored to the patient’s condition and background.
-                    
-                    Guidelines:
-                    - Always state that this is not a substitute for professional medical advice.
-                    - Be empathetic and prioritize patient safety.
-                    - Include practical, realistic steps that the patient can implement.
-                    
-                    Patient Name: {profile_name}
-                    Condition: {condition}
-                    Duration: {duration}
-                    Severity: {severity}
-                    Age Group: {age_group}
-                    Pre-existing Conditions: {', '.join(medical_conditions) if medical_conditions else 'None'}
-                    Current Medications: {medications}
-                    
-                    Provide a detailed, phase-wise treatment plan including:
-                    
-                    ### Phase 1: Immediate Actions
-                    - Specific medications (dosages and frequency).
-                    - Lifestyle modifications (diet, rest, activity).
-                    
-                    ### Phase 2: Short-Term Goals (1-2 weeks)
-                    - Follow-up care recommendations.
-                    - Monitoring parameters (what to track daily or weekly).
-                    
-                    ### Phase 3: Long-Term Management (Beyond 2 weeks)
-                    - Sustained lifestyle changes.
-                    - Potential complications to monitor.
-                    - Tips for managing flare-ups or setbacks.
-                    
-                    Format your response clearly using markdown headers and bullet points.
-                    
-                    Answer:
-                    """
+                You are a professional medical assistant AI helping a patient with their health queries.
+                Use the following guidelines:
+                - Be empathetic, informative, and clear.
+                - Always mention that you're not a substitute for real medical advice.
+                - If unsure, recommend consulting a physician.
+
+                Patient Profile: {profile_info}
+                Chat History: {chat_history}
+                User Question: "{user_input}"
+
+                Answer:
+                """
                 with st.spinner("🧠 Generating response..."):
                     response = llm.invoke(prompt).strip()
                 if not response or "error" in response.lower():
@@ -568,24 +545,28 @@ elif page == "Chat":
 elif page == "Symptoms":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🧠 Symptom Checker")
+    
+    # Section Header
     st.markdown("""
     <p style="font-size: 18px; color: #34495e;">
         Enter your symptoms, and our AI-powered assistant will analyze them to provide potential causes and recommendations.
     </p>
     """, unsafe_allow_html=True)
-
+    
     # Step 1: Input Symptoms
     st.subheader("Step 1: Describe Your Symptoms")
     col1, col2 = st.columns(2)
+    
     with col1:
         symptom_1 = st.text_input("Symptom 1", placeholder="e.g., Headache")
         symptom_2 = st.text_input("Symptom 2", placeholder="e.g., Fatigue")
         symptom_3 = st.text_input("Symptom 3", placeholder="e.g., Nausea")
+    
     with col2:
         duration = st.selectbox("Duration", ["Less than 1 day", "1-3 days", "4-7 days", "More than 7 days"])
         severity = st.select_slider("Severity", options=["Mild", "Moderate", "Severe"], value="Moderate")
         location = st.text_input("Location of Symptoms", placeholder="e.g., Head, Abdomen")
-
+    
     # Step 2: Additional Information
     st.subheader("Step 2: Provide Additional Details (Optional)")
     age_group = st.selectbox("Age Group", ["Child (0-12)", "Teen (13-19)", "Adult (20-64)", "Senior (65+)"])
@@ -594,48 +575,55 @@ elif page == "Symptoms":
         ["Diabetes", "Hypertension", "Asthma", "Heart Disease", "None"]
     )
     medications = st.text_area("Current Medications", placeholder="List any medications you are taking")
-
+    
     # Analyze Button
     if st.button("🧠 Analyze Symptoms", key="analyze_symptoms"):
+        # Validate Inputs
         symptoms = [symptom_1, symptom_2, symptom_3]
         valid_symptoms = [s.strip() for s in symptoms if s.strip()]
+        
         if not valid_symptoms:
             st.error("❌ Please enter at least one symptom.")
         else:
+            # Prepare Prompt for LLM
             try:
                 llm = get_llm("symptoms")
                 profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
                 prompt = f"""
-You are an expert medical assistant AI helping patients understand their reported symptoms. 
-Your role is to provide clear, empathetic, and informative guidance based on the input provided. 
+                You are a professional medical assistant AI analyzing patient-reported symptoms.
+                Use the following guidelines:
+                - Be empathetic, informative, and clear.
+                - Always mention that you're not a substitute for real medical advice.
+                - If unsure, recommend consulting a physician.
 
-Please follow these guidelines:
-- Always remind the user that this is not a substitute for professional medical advice.
-- Prioritize safety: If symptoms suggest a serious condition, advise immediate consultation.
-- Be specific about possible conditions, risk factors, and actionable steps.
+                Patient Profile: {profile_info}
+                Reported Symptoms: {', '.join(valid_symptoms)}
+                Duration: {duration}
+                Severity: {severity}
+                Location: {location}
+                Age Group: {age_group}
+                Pre-existing Conditions: {', '.join(medical_conditions) if medical_conditions else 'None'}
+                Current Medications: {medications}
 
-Patient Profile: {profile_info}
-Reported Symptoms: {', '.join(valid_symptoms)}
-Duration: {duration}
-Severity: {severity}
-Location: {location}
-Age Group: {age_group}
-Pre-existing Conditions: {', '.join(medical_conditions) if medical_conditions else 'None'}
-Current Medications: {medications}
+                Provide a detailed analysis including:
+                1. Possible causes or conditions based on symptoms.
+                2. Recommended actions or precautions.
+                3. When to consult a doctor.
 
-Please structure your response clearly with the following headings:
+                Output format:
+                ### 🔍 Symptom Analysis
+                - **Possible Causes**: [List possible causes]
+                - **Recommendations**: [Provide actionable advice]
+                - **When to See a Doctor**: [Specify urgency]
 
-### 🔍 Symptom Analysis
-- **Possible Causes**: Provide a list of likely causes, from most common to less common but still relevant.
-- **Recommendations**: Suggest actions the user can take, such as lifestyle changes, OTC remedies, or self-care practices.
-- **When to See a Doctor**: Explain under what circumstances the user should seek professional help.
-
-Answer:
+                Answer:
                 """
                 with st.spinner("🧠 Analyzing symptoms..."):
                     response = llm.invoke(prompt).strip()
+                
                 if not response or "error" in response.lower():
                     response = "I'm unable to analyze symptoms at this time due to technical issues. Please try again later."
+                
                 st.markdown("### 🧠 Symptom Analysis")
                 st.markdown(response)
             except Exception as e:
@@ -649,10 +637,8 @@ Answer:
             file_name="symptom_analysis.txt",
             mime="text/plain"
         )
+
     st.markdown('</div>', unsafe_allow_html=True)
-
-# Similar improvements made to "Treatment" and "Diseases" pages — see next section
-
 
 
 
