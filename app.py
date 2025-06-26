@@ -956,12 +956,316 @@ elif page == "Diseases":
 
 
 
-
 elif page == "Reports":
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 📊 Reports & Analytics")
-    # Existing reports logic here
+    st.markdown("### 📊 Ultimate Health Analytics Dashboard")
+    
+    # Section Header
+    st.markdown("""
+    <p style="font-size: 18px; color: #34495e;">
+        Analyze your health metrics, generate detailed reports, and visualize trends.
+    </p>
+    """, unsafe_allow_html=True)
+    
+    # Initialize session state analytics data if not exists
+    if "analytics_data" not in st.session_state:
+        st.session_state.analytics_data = {
+            "dates": [datetime.now().strftime("%Y-%m-%d")],
+            "heart_rates": [72],
+            "glucose_levels": [90],
+            "blood_pressure_systolic": [120],
+            "blood_pressure_diastolic": [80],
+            "peak_flow": [400],
+            "hba1c": [5.7]
+        }
+    
+    # Step 1: Log New Metrics
+    st.subheader("Step 1: Log New Health Metrics")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        metric_type = st.selectbox(
+            "Select Metric Type",
+            ["Heart Rate", "Blood Glucose", "Blood Pressure", "Peak Flow", "HbA1c"]
+        )
+        if metric_type == "Heart Rate":
+            value = st.number_input("Heart Rate (bpm)", min_value=40, max_value=140, step=1)
+        elif metric_type == "Blood Glucose":
+            value = st.number_input("Blood Glucose (mg/dL)", min_value=50, max_value=300, step=1)
+        elif metric_type == "Blood Pressure":
+            systolic = st.number_input("Systolic BP (mmHg)", min_value=90, max_value=200, step=1)
+            diastolic = st.number_input("Diastolic BP (mmHg)", min_value=60, max_value=130, step=1)
+        elif metric_type == "Peak Flow":
+            value = st.number_input("Peak Flow (L/min)", min_value=100, max_value=800, step=1)
+        elif metric_type == "HbA1c":
+            value = st.number_input("HbA1c (%)", min_value=4.0, max_value=12.0, step=0.1)
+    
+    with col2:
+        log_date = st.date_input("Log Date", value=datetime.today())
+        if st.button("✅ Log Metric"):
+            if metric_type == "Heart Rate":
+                st.session_state.analytics_data["heart_rates"].append(value)
+                st.session_state.analytics_data["dates"].append(log_date.strftime("%Y-%m-%d"))
+                st.success(f"Logged Heart Rate: {value} bpm on {log_date.strftime('%Y-%m-%d')}")
+            elif metric_type == "Blood Glucose":
+                st.session_state.analytics_data["glucose_levels"].append(value)
+                st.session_state.analytics_data["dates"].append(log_date.strftime("%Y-%m-%d"))
+                st.success(f"Logged Blood Glucose: {value} mg/dL on {log_date.strftime('%Y-%m-%d')}")
+            elif metric_type == "Blood Pressure":
+                st.session_state.analytics_data["blood_pressure_systolic"].append(systolic)
+                st.session_state.analytics_data["blood_pressure_diastolic"].append(diastolic)
+                st.session_state.analytics_data["dates"].append(log_date.strftime("%Y-%m-%d"))
+                st.success(f"Logged Blood Pressure: {systolic}/{diastolic} mmHg on {log_date.strftime('%Y-%m-%d')}")
+            elif metric_type == "Peak Flow":
+                st.session_state.analytics_data["peak_flow"].append(value)
+                st.session_state.analytics_data["dates"].append(log_date.strftime("%Y-%m-%d"))
+                st.success(f"Logged Peak Flow: {value} L/min on {log_date.strftime('%Y-%m-%d')}")
+            elif metric_type == "HbA1c":
+                st.session_state.analytics_data["hba1c"].append(value)
+                st.session_state.analytics_data["dates"].append(log_date.strftime("%Y-%m-%d"))
+                st.success(f"Logged HbA1c: {value}% on {log_date.strftime('%Y-%m-%d')}")
+
+    # Step 2: Generate AI-Driven Health Summary
+    st.subheader("Step 2: Generate AI-Driven Health Summary")
+    if st.button("🧠 Generate AI Report Summary"):
+        try:
+            profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
+            prompt = f"""
+            You are a professional medical assistant AI analyzing health metrics.
+            Use the following guidelines:
+            - Be empathetic, informative, and clear.
+            - Always mention that you're not a substitute for real medical advice.
+            - If unsure, recommend consulting a physician.
+
+            Patient Profile: {profile_info}
+            Latest Metrics:
+            - Heart Rate: {st.session_state.analytics_data['heart_rates'][-1]} bpm
+            - Blood Glucose: {st.session_state.analytics_data['glucose_levels'][-1]} mg/dL
+            - Blood Pressure: {st.session_state.analytics_data['blood_pressure_systolic'][-1]}/{st.session_state.analytics_data['blood_pressure_diastolic'][-1]} mmHg
+            - Peak Flow: {st.session_state.analytics_data['peak_flow'][-1]} L/min
+            - HbA1c: {st.session_state.analytics_data['hba1c'][-1]}%
+
+            Provide a detailed analysis including:
+            1. Trends in metrics over time.
+            2. Potential health implications.
+            3. Recommendations for improvement.
+            4. Warnings or reminders about consulting a doctor.
+
+            Output format:
+            ### 🧠 AI Health Analysis
+            - **Trends**: [Explain trends in metrics]
+            - **Implications**: [Explain what the trends might mean]
+            - **Recommendations**: [Provide actionable advice]
+            - **Warnings**: [Include any important notes]
+
+            Answer:
+            """
+            llm = get_llm("reports")
+            with st.spinner("🧠 Generating AI-driven health summary..."):
+                response = llm.invoke(prompt).strip()
+            if not response or "error" in response.lower():
+                response = "I'm unable to generate a health summary at this time due to technical issues. Please try again later."
+            
+            st.markdown("### 🧠 AI Health Analysis")
+            st.markdown(response)
+            ai_summary = response
+        except Exception as e:
+            st.error(f"🚨 Error generating AI summary: {str(e)}")
+    
+    # Step 3: Visualize Historical Data
+    st.subheader("Step 3: Visualize Historical Data")
+    visualization_type = st.selectbox(
+        "Select Metric to Visualize",
+        ["Heart Rate", "Blood Glucose", "Blood Pressure", "Peak Flow", "HbA1c"]
+    )
+    
+    dates = st.session_state.analytics_data.get("dates", [])
+    heart_rates = st.session_state.analytics_data.get("heart_rates", [])
+    glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
+    bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
+    bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
+    peak_flow = st.session_state.analytics_data.get("peak_flow", [])
+    hba1c = st.session_state.analytics_data.get("hba1c", [])
+    
+    if visualization_type == "Heart Rate" and heart_rates:
+        df_hr = pd.DataFrame({"Date": dates, "Heart Rate (bpm)": heart_rates})
+        fig = px.line(df_hr, x="Date", y="Heart Rate (bpm)", title="Heart Rate Over Time")
+        fig.update_layout(yaxis_title="Heart Rate (bpm)", xaxis_title="Date")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    elif visualization_type == "Blood Glucose" and glucose_levels:
+        df_gluc = pd.DataFrame({"Date": dates, "Blood Glucose (mg/dL)": glucose_levels})
+        fig = px.line(df_gluc, x="Date", y="Blood Glucose (mg/dL)", title="Blood Glucose Over Time")
+        fig.update_layout(yaxis_title="Blood Glucose (mg/dL)", xaxis_title="Date")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    elif visualization_type == "Blood Pressure" and bp_systolic and bp_diastolic:
+        df_bp = pd.DataFrame({
+            "Date": dates,
+            "Systolic BP (mmHg)": bp_systolic,
+            "Diastolic BP (mmHg)": bp_diastolic
+        })
+        fig = px.line(df_bp, x="Date", y=["Systolic BP (mmHg)", "Diastolic BP (mmHg)"], title="Blood Pressure Over Time")
+        fig.update_layout(yaxis_title="Pressure (mmHg)", xaxis_title="Date")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    elif visualization_type == "Peak Flow" and peak_flow:
+        df_pf = pd.DataFrame({"Date": dates, "Peak Flow (L/min)": peak_flow})
+        fig = px.line(df_pf, x="Date", y="Peak Flow (L/min)", title="Peak Flow Over Time")
+        fig.update_layout(yaxis_title="Peak Flow (L/min)", xaxis_title="Date")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    elif visualization_type == "HbA1c" and hba1c:
+        df_hba1c = pd.DataFrame({"Date": dates, "HbA1c (%)": hba1c})
+        fig = px.line(df_hba1c, x="Date", y="HbA1c (%)", title="HbA1c Over Time")
+        fig.update_layout(yaxis_title="HbA1c (%)", xaxis_title="Date")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    else:
+        st.info("ℹ️ No historical data available yet.")
+
+    # Step 4: Export PDF Report
+    st.subheader("Step 4: Export PDF Report")
+    if st.session_state.profile_complete:
+        pdf_data = export_health_report(ai_summary=ai_summary)
+        st.download_button(
+            label="📄 Export Report as PDF",
+            data=pdf_data,
+            file_name="health_report.pdf",
+            mime="application/pdf"
+        )
+
+    # Step 5: Manage Logs
+    st.subheader("Step 5: Manage Logged Metrics")
+    st.write("View and edit logged metrics below:")
+    
+    # Display Metrics Table
+    metrics_df = pd.DataFrame({
+        "Date": dates,
+        "Heart Rate (bpm)": heart_rates,
+        "Blood Glucose (mg/dL)": glucose_levels,
+        "Systolic BP (mmHg)": bp_systolic,
+        "Diastolic BP (mmHg)": bp_diastolic,
+        "Peak Flow (L/min)": peak_flow,
+        "HbA1c (%)": hba1c
+    })
+    edited_metrics = st.data_editor(metrics_df, num_rows="dynamic")
+    
+    if st.button("💾 Save Changes"):
+        st.session_state.analytics_data["dates"] = edited_metrics["Date"].tolist()
+        st.session_state.analytics_data["heart_rates"] = edited_metrics["Heart Rate (bpm)"].tolist()
+        st.session_state.analytics_data["glucose_levels"] = edited_metrics["Blood Glucose (mg/dL)"].tolist()
+        st.session_state.analytics_data["blood_pressure_systolic"] = edited_metrics["Systolic BP (mmHg)"].tolist()
+        st.session_state.analytics_data["blood_pressure_diastolic"] = edited_metrics["Diastolic BP (mmHg)"].tolist()
+        st.session_state.analytics_data["peak_flow"] = edited_metrics["Peak Flow (L/min)"].tolist()
+        st.session_state.analytics_data["hba1c"] = edited_metrics["HbA1c (%)"].tolist()
+        st.success("Changes saved successfully!")
+    
+    # Reset Logs Button
+    if st.button("🔄 Reset All Logs"):
+        st.session_state.analytics_data = {
+            "dates": [datetime.now().strftime("%Y-%m-%d")],
+            "heart_rates": [72],
+            "glucose_levels": [90],
+            "blood_pressure_systolic": [120],
+            "blood_pressure_diastolic": [80],
+            "peak_flow": [400],
+            "hba1c": [5.7]
+        }
+        st.success("All logs have been reset.")
+    
+    # Step 6: Advanced Analytics
+    st.subheader("Step 6: Advanced Analytics")
+    if st.checkbox("Show Advanced Analytics"):
+        st.markdown("#### Correlation Matrix")
+        numeric_columns = [
+            "Heart Rate (bpm)",
+            "Blood Glucose (mg/dL)",
+            "Systolic BP (mmHg)",
+            "Diastolic BP (mmHg)",
+            "Peak Flow (L/min)",
+            "HbA1c (%)"
+        ]
+        corr_df = metrics_df[numeric_columns].corr()
+        fig_corr = px.imshow(corr_df, text_auto=True, title="Correlation Matrix")
+        st.plotly_chart(fig_corr, use_container_width=True)
+        
+        st.markdown("#### Metric Distribution")
+        metric_to_analyze = st.selectbox("Select Metric for Distribution", numeric_columns)
+        fig_dist = px.histogram(metrics_df, x=metric_to_analyze, nbins=20, title=f"Distribution of {metric_to_analyze}")
+        st.plotly_chart(fig_dist, use_container_width=True)
+    
+    # Step 7: Predictive Analytics
+    st.subheader("Step 7: Predictive Analytics")
+    if st.checkbox("Enable Predictive Analytics"):
+        st.markdown("#### Forecasting Future Trends")
+        forecast_metric = st.selectbox("Select Metric for Forecasting", numeric_columns)
+        if forecast_metric:
+            try:
+                from statsmodels.tsa.holtwinters import ExponentialSmoothing
+                
+                # Prepare data for forecasting
+                ts_data = metrics_df.set_index("Date")[forecast_metric]
+                ts_data.index = pd.to_datetime(ts_data.index)
+                model = ExponentialSmoothing(ts_data, seasonal="add", seasonal_periods=7)
+                hw_model = model.fit()
+                forecast = hw_model.forecast(steps=7)
+                
+                # Plot forecast
+                fig_forecast = px.line(
+                    title=f"Forecast for {forecast_metric}",
+                    labels={"value": forecast_metric, "index": "Date"}
+                )
+                fig_forecast.add_scatter(x=ts_data.index, y=ts_data, mode="lines", name="Historical Data")
+                fig_forecast.add_scatter(x=forecast.index, y=forecast, mode="lines", name="Forecasted Data")
+                st.plotly_chart(fig_forecast, use_container_width=True)
+            except Exception as e:
+                st.error(f"🚨 Error generating forecast: {str(e)}")
+    
+    # Step 8: Risk Assessment
+    st.subheader("Step 8: Risk Assessment")
+    if st.checkbox("Perform Risk Assessment"):
+        risk_prompt = f"""
+        Based on the patient's latest metrics and trends:
+        - Heart Rate: {st.session_state.analytics_data['heart_rates'][-1]} bpm
+        - Blood Glucose: {st.session_state.analytics_data['glucose_levels'][-1]} mg/dL
+        - Blood Pressure: {st.session_state.analytics_data['blood_pressure_systolic'][-1]}/{st.session_state.analytics_data['blood_pressure_diastolic'][-1]} mmHg
+        - Peak Flow: {st.session_state.analytics_data['peak_flow'][-1]} L/min
+        - HbA1c: {st.session_state.analytics_data['hba1c'][-1]}%
+
+        Assess the risk of developing chronic conditions like diabetes, hypertension, or cardiovascular diseases.
+        Provide a risk score (low, medium, high) and recommendations to mitigate risks.
+        """
+        try:
+            llm = get_llm("reports")
+            with st.spinner("🧠 Performing risk assessment..."):
+                risk_response = llm.invoke(risk_prompt).strip()
+            st.markdown("### 🚨 Risk Assessment Results")
+            st.markdown(risk_response)
+        except Exception as e:
+            st.error(f"🚨 Error performing risk assessment: {str(e)}")
+    
+    # Footer
+    lang = st.session_state.language
+    st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
+    
+    # Debug Mode
+    with st.expander("🔧 Debug Mode"):
+        st.write("Session State:", st.session_state)
+
     st.markdown('</div>', unsafe_allow_html=True)
+
+
+
+
+
+
+
+
+
+
+
+            
 
 elif page == "Settings":
     st.markdown('<div class="card">', unsafe_allow_html=True)
