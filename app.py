@@ -978,6 +978,23 @@ elif page == "Reports":
             "hba1c": [5.7]
         }
     
+    # Ensure all lists in analytics_data are the same length
+    def pad_or_truncate_lists(data_dict):
+        """Ensure all lists in the dictionary are of the same length."""
+        max_length = max(len(lst) for lst in data_dict.values())
+        for key in data_dict:
+            current_length = len(data_dict[key])
+            if current_length < max_length:
+                # Pad with None if the list is shorter
+                data_dict[key].extend([None] * (max_length - current_length))
+            elif current_length > max_length:
+                # Truncate if the list is longer
+                data_dict[key] = data_dict[key][:max_length]
+        return data_dict
+    
+    # Apply padding/truncation to analytics_data
+    st.session_state.analytics_data = pad_or_truncate_lists(st.session_state.analytics_data)
+    
     # Step 1: Log New Metrics
     st.subheader("Step 1: Log New Health Metrics")
     col1, col2 = st.columns(2)
@@ -1155,8 +1172,8 @@ elif page == "Reports":
 
         # Export as CSV
         csv_data = ""
-        if st.session_state.analytics_data:
-            df_export = pd.DataFrame({
+        if st.session_state.analytics_
+            metrics_df = pd.DataFrame({
                 "Date": dates,
                 "Heart Rate (bpm)": heart_rates,
                 "Blood Glucose (mg/dL)": glucose_levels,
@@ -1165,7 +1182,7 @@ elif page == "Reports":
                 "Peak Flow (L/min)": peak_flow,
                 "HbA1c (%)": hba1c
             })
-            csv_data = df_export.to_csv(index=False)
+            csv_data = metrics_df.to_csv(index=False)
         
         st.download_button(
             label="💾 Export Metrics as CSV",
