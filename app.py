@@ -587,9 +587,111 @@ elif page == "Symptoms":
 
 elif page == "Treatment":
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 💊 Treatment Planner")
-    # Existing treatment planner logic here
+    st.markdown("### 💊 Personalized Treatment Planner")
+    
+    # Section Header
+    st.markdown("""
+    <p style="font-size: 18px; color: #34495e;">
+        Create a personalized treatment plan based on your condition and duration.
+    </p>
+    """, unsafe_allow_html=True)
+    
+    # Step 1: Input Condition and Duration
+    st.subheader("Step 1: Describe Your Condition")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        condition = st.text_input("Condition or Diagnosis", placeholder="e.g., Diabetes, Hypertension")
+        duration = st.selectbox("Duration", ["Acute (short-term)", "Chronic (long-term)"])
+    
+    with col2:
+        severity = st.select_slider("Severity", options=["Mild", "Moderate", "Severe"], value="Moderate")
+        age_group = st.selectbox("Age Group", ["Child (0-12)", "Teen (13-19)", "Adult (20-64)", "Senior (65+)"])
+    
+    # Step 2: Additional Information
+    st.subheader("Step 2: Provide Additional Details (Optional)")
+    medical_conditions = st.multiselect(
+        "Pre-existing Medical Conditions",
+        ["Diabetes", "Hypertension", "Asthma", "Heart Disease", "None"]
+    )
+    medications = st.text_area("Current Medications", placeholder="List any medications you are taking")
+    
+    # Generate Treatment Plan Button
+    if st.button("🧠 Generate Treatment Plan", key="generate_treatment"):
+        # Validate Inputs
+        if not condition.strip():
+            st.error("❌ Please enter a valid condition.")
+        else:
+            # Prepare Prompt for LLM
+            try:
+                llm = get_llm("treatment")
+                profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
+                prompt = f"""
+                You are a professional medical assistant AI creating a personalized treatment plan.
+                Use the following guidelines:
+                - Be empathetic, informative, and clear.
+                - Always mention that you're not a substitute for real medical advice.
+                - If unsure, recommend consulting a physician.
+
+                Patient Profile: {profile_info}
+                Condition: {condition}
+                Duration: {duration}
+                Severity: {severity}
+                Age Group: {age_group}
+                Pre-existing Conditions: {', '.join(medical_conditions) if medical_conditions else 'None'}
+                Current Medications: {medications}
+
+                Provide a detailed treatment plan including:
+                1. Medications (with dosages and frequency).
+                2. Lifestyle modifications.
+                3. Follow-up care recommendations.
+                4. Potential complications to monitor.
+
+                Output format:
+                ### 🩺 Treatment Plan
+                - **Medications**: [List medications with dosages]
+                - **Lifestyle Modifications**: [Provide actionable advice]
+                - **Follow-up Care**: [Specify when and how often to follow up]
+                - **Complications to Monitor**: [List potential risks]
+
+                Answer:
+                """
+                with st.spinner("🧠 Generating treatment plan..."):
+                    response = llm.invoke(prompt).strip()
+                
+                if not response or "error" in response.lower():
+                    response = "I'm unable to generate a treatment plan at this time due to technical issues. Please try again later."
+                
+                st.markdown("### 🩺 Personalized Treatment Plan")
+                st.markdown(response)
+            except Exception as e:
+                st.error(f"🚨 Error generating treatment plan: {str(e)}")
+
+    # Export Treatment Plan Button
+    if "treatment_plan" in st.session_state and st.session_state.treatment_plan:
+        st.download_button(
+            label="Export Treatment Plan",
+            data=st.session_state.treatment_plan,
+            file_name="treatment_plan.txt",
+            mime="text/plain"
+        )
+
     st.markdown('</div>', unsafe_allow_html=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 elif page == "Diseases":
     st.markdown('<div class="card">', unsafe_allow_html=True)
