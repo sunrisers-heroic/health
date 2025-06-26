@@ -982,7 +982,6 @@ elif page == "Diseases":
 
 
 
-
 elif page == "Reports":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 📊 Ultimate Health Analytics Dashboard")
@@ -1204,9 +1203,10 @@ elif page == "Reports":
     else:
         st.info("ℹ️ No historical data available yet.")
 
-    # Step 6: Export PDF Report
+    # Step 6: Export Report
     st.subheader("Step 6: Export Report")
     if st.session_state.profile_complete:
+        # Export PDF
         pdf_data = export_health_report(ai_summary=ai_summary)
         st.download_button(
             label="📄 Export Report as PDF",
@@ -1215,7 +1215,7 @@ elif page == "Reports":
             mime="application/pdf"
         )
 
-        # Export as CSV
+        # Export CSV
         csv_data = ""
         metrics_df = pd.DataFrame({
             "Date": dates,
@@ -1234,8 +1234,9 @@ elif page == "Reports":
             file_name="health_metrics.csv",
             mime="text/csv"
         )
-    # Step 5: Visualize Historical Data
-    st.subheader("Step 5: Visualize Historical Data")
+    else:
+        st.warning("⚠️ Complete your profile to enable report export.")
+
     # Footer
     lang = st.session_state.language
     st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
@@ -1245,7 +1246,6 @@ elif page == "Reports":
         st.write("Session State:", st.session_state)
 
     st.markdown('</div>', unsafe_allow_html=True)
-
 
 
 
