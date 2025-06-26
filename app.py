@@ -1494,4 +1494,4 @@ elif page == "Reports":
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Footer
-st.markdown('<footer>© Health Assistant 2023</footer>', unsafe_allow_html=True)
+st.markdown('<footer>© Health Assistant 2025</footer>', unsafe_allow_html=True)
