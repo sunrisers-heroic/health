@@ -1,5 +1,4 @@
-# app.py 
-
+# app.py  
 # Importing Libraries
 import streamlit as st
 from langchain_ibm import WatsonxLLM
@@ -13,7 +12,11 @@ import plotly.express as px
 import pandas as pd
 
 # Page config
-st.set_page_config(page_title="🩺 Health Assistant", layout="wide", page_icon="🩺")
+st.set_page_config(
+    page_title="🩺 Health Assistant", 
+    layout="wide", 
+    page_icon="🩺"
+)
 
 # Custom CSS - Enhanced Violet and Pink Theme with Borders and Latin Math Font
 st.markdown("""
@@ -25,7 +28,7 @@ p {font-size: 16px; color: #34495e;}
 a {color: #8e44ad; text-decoration: none;} a:hover {text-decoration: underline;}
 .main {background-color: #ffffffcc; backdrop-filter: blur(10px); border-radius: 16px; padding: 30px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); max-width: 1200px; margin: auto; animation: fadeIn 0.5s ease-in-out; border: 2px solid #ddd;}
 @keyframes fadeIn {from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: translateY(0);}}
-.card {background-color: #fff; border-left: 6px solid #8e44ad; border-radius: 12px; padding: 25px; margin: 20px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease; border: 1px solid #eee;} 
+.card {background-color: #fff; border-left: 6px solid #8e44ad; border-radius: 12px; padding: 25px; margin: 20px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.3s ease;} 
 .card:hover {transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1);}
 .navbar {display: flex; justify-content: center; gap: 20px; padding: 15px 0; background: linear-gradient(to right, #8e44ad, #ec7063); border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 999; transition: all 0.3s ease;}
 .nav-button {background-color: #ffffff; color: #8e44ad; border: none; width: 60px; height: 60px; font-size: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
@@ -49,7 +52,7 @@ button:active {transform: translateY(0);}
 .icon-button:hover {background-color: #732d91; transform: scale(1.02);}
 ::-webkit-scrollbar {width: 8px;}
 ::-webkit-scrollbar-track {background: #f1f1f1; border-radius: 4px;}
-::-webkit-scrollbar-thumb {background: #ddd; border-radius: 4px;}
+::-webkit-scrollbar-thumb {background-color: #ddd; border-radius: 4px;}
 ::-webkit-scrollbar-thumb:hover {background: #bbb;}
 @media (max-width: 768px) {.navbar {flex-wrap: wrap;} .nav-button {width: 50px; height: 50px; font-size: 20px;} .main {padding: 20px;} .card {padding: 20px;}}
 .stAlert {border-radius: 10px; padding: 12px 16px; margin: 10px 0; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);}
@@ -89,7 +92,6 @@ tr:hover {background-color: #f9f9f9;}
 """, unsafe_allow_html=True)
 
 # Sidebar Navigation
-# Navigation Sidebar
 st.sidebar.title("Navigation")
 page = st.sidebar.selectbox(
     "Go to",
@@ -131,18 +133,14 @@ def reset_profile():
     st.session_state.bp_log = []
     st.session_state.asthma_log = []
     st.session_state.health_data = {}
-    st.session_state.analytics_data = {"heart_rates": [72], "glucose_levels": [90], "dates": [datetime.now().strftime("%Y-%m-%d")]}
-
-    
+    st.session_state.analytics_data = {
+        "heart_rates": [72], 
+        "glucose_levels": [90], 
+        "dates": [datetime.now().strftime("%Y-%m-%d")]
+    }
     st.rerun()
 
-
-#Global
-
 # Load Watsonx credentials
-
-
-
 try:
     credentials = {
         "url": st.secrets["WATSONX_URL"],
@@ -178,12 +176,6 @@ except KeyError:
 except Exception as e:
     st.error(f"🚨 Error initializing LLM: {str(e)}")
     st.stop()
-
-
-
-
-
-
 
 LANGUAGES = {
     "en": {
@@ -236,19 +228,7 @@ LANGUAGES = {
     }
 }
 
-
-
-
-
-
-
-
-
 # Function to export data as PDF including user profile
-
-
-from fpdf import FPDF
-
 def export_health_report(ai_summary=None):
     """
     Generate a PDF health report with analytics data and AI summary.
@@ -260,17 +240,17 @@ def export_health_report(ai_summary=None):
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Arial", size=12)
-
+    
     # Add Title
     pdf.set_font("Arial", style="B", size=16)
     pdf.cell(0, 10, "HealthAI Report", ln=True, align="C")
     pdf.ln(10)
-
+    
     # Add Date
     pdf.set_font("Arial", size=12)
     pdf.cell(0, 10, f"Report Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
     pdf.ln(5)
-
+    
     # Add Profile Data (if available)
     if "profile_data" in st.session_state and st.session_state.profile_complete:
         profile_data = st.session_state.profile_data
@@ -281,7 +261,7 @@ def export_health_report(ai_summary=None):
         pdf.cell(0, 10, f"Gender: {profile_data.get('gender', 'N/A')}", ln=True)
         pdf.cell(0, 10, f"Comorbidities: {profile_data.get('comorbidities', 'N/A')}", ln=True)
         pdf.ln(5)
-
+    
     # Add Latest Metrics
     analytics_data = st.session_state.analytics_data
     dates = analytics_data.get("dates", [])
@@ -291,13 +271,13 @@ def export_health_report(ai_summary=None):
     bp_diastolic = analytics_data.get("blood_pressure_diastolic", [])
     peak_flow = analytics_data.get("peak_flow", [])
     hba1c = analytics_data.get("hba1c", [])
-
+    
     latest_date = dates[-1] if len(dates) > 0 else "N/A"
     latest_hr = heart_rates[-1] if len(heart_rates) > 0 and isinstance(heart_rates[-1], (int, float)) else "N/A"
     latest_glucose = glucose_levels[-1] if len(glucose_levels) > 0 and isinstance(glucose_levels[-1], (int, float)) else "N/A"
     latest_peak = peak_flow[-1] if len(peak_flow) > 0 and isinstance(peak_flow[-1], (int, float)) else "N/A"
     latest_hba1c = hba1c[-1] if len(hba1c) > 0 and isinstance(hba1c[-1], (int, float)) else "N/A"
-
+    
     pdf.set_font("Arial", style="B", size=14)
     pdf.cell(0, 10, "Latest Health Metrics", ln=True)
     pdf.set_font("Arial", size=12)
@@ -307,7 +287,7 @@ def export_health_report(ai_summary=None):
     pdf.cell(0, 10, f"Peak Flow: {latest_peak} L/min", ln=True)
     pdf.cell(0, 10, f"HbA1c: {latest_hba1c} %", ln=True)
     pdf.ln(5)
-
+    
     # Add AI Summary (if available)
     if ai_summary:
         pdf.set_font("Arial", style="B", size=14)
@@ -315,30 +295,13 @@ def export_health_report(ai_summary=None):
         pdf.set_font("Arial", size=12)
         pdf.multi_cell(0, 10, ai_summary)
         pdf.ln(5)
-
+    
     # Add Footer
     pdf.set_font("Arial", size=10)
     pdf.cell(0, 10, "This report is generated by HealthAI. For more details, consult your healthcare provider.", ln=True)
-
+    
     # Return PDF as bytes
     return pdf.output(dest="S").encode("latin-1")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # Pages
 if page == "Profile":
@@ -407,30 +370,6 @@ if page == "Profile":
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 elif page == "Chat":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🗨️ Chat Interface")
@@ -445,7 +384,7 @@ elif page == "Chat":
     # Display Chat History
     if "messages" not in st.session_state:
         st.session_state.messages = []
-
+    
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
     for role, message in st.session_state.messages:
         if role == "user":
@@ -453,17 +392,20 @@ elif page == "Chat":
         elif role == "assistant":
             st.markdown(f'<div class="bot-bubble"><strong>Assistant:</strong><br>{message}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
+    
     # User Input
     st.markdown('<div class="input-container">', unsafe_allow_html=True)
     user_input = st.text_input("Ask your question here:", placeholder="Type your query...", key="user_input")
     col1, col2 = st.columns([1, 6])
+    
     with col1:
         send_button = st.button("Send", key="send_message")
+    
     with col2:
         clear_button = st.button("Clear Chat", key="clear_chat")
+    
     st.markdown('</div>', unsafe_allow_html=True)
-
+    
     # Handle Send Button
     if send_button:
         if user_input.strip() == "":
@@ -471,41 +413,65 @@ elif page == "Chat":
         else:
             # Add user message to chat history
             st.session_state.messages.append(("user", user_input))
-
+            
             # Generate AI response
             try:
                 llm = get_llm("chat")
                 profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
                 chat_history = ''.join([f'{r.capitalize()}: {c}' for r, c in st.session_state.messages[-6:]])
+                
                 prompt = f"""
-                You are a professional medical assistant AI helping a patient with their health queries.
-                Use the following guidelines:
-                - Be empathetic, informative, and clear.
-                - Always mention that you're not a substitute for real medical advice.
-                - If unsure, recommend consulting a physician.
-
-                Patient Profile: {profile_info}
-                Chat History: {chat_history}
-                User Question: "{user_input}"
-
-                Answer:
-                """
+                    You are a professional medical assistant AI creating a personalized, phase-wise treatment plan.
+                    Your goal is to provide a comprehensive, easy-to-follow guide tailored to the patient’s condition and background.
+                    Guidelines:
+                    - Always state that this is not a substitute for professional medical advice.
+                    - Be empathetic and prioritize patient safety.
+                    - Include practical, realistic steps that the patient can implement.
+                    
+                    Patient Name: {profile_info}
+                    Condition: {condition}
+                    Duration: {duration}
+                    Severity: {severity}
+                    Age Group: {age_group}
+                    Pre-existing Conditions: {', '.join(medical_conditions) if medical_conditions else 'None'}
+                    Current Medications: {medications}
+                    
+                    Provide a detailed, phase-wise treatment plan including:
+                    ### Phase 1: Immediate Actions
+                    - Specific medications (dosages and frequency).
+                    - Lifestyle modifications (diet, rest, activity).
+                    
+                    ### Phase 2: Short-Term Goals (1-2 weeks)
+                    - Follow-up care recommendations.
+                    - Monitoring parameters (what to track daily or weekly).
+                    
+                    ### Phase 3: Long-Term Management (Beyond 2 weeks)
+                    - Sustained lifestyle changes.
+                    - Potential complications to monitor.
+                    - Tips for managing flare-ups or setbacks.
+                    
+                    Format your response clearly using markdown headers and bullet points.
+                    Answer:
+                    """
+                
                 with st.spinner("🧠 Generating response..."):
                     response = llm.invoke(prompt).strip()
+                
                 if not response or "error" in response.lower():
                     response = "I'm unable to respond at this time due to technical issues. Please try again later."
                 
                 # Add assistant response to chat history
                 st.session_state.messages.append(("assistant", response))
                 st.rerun()
+            
             except Exception as e:
                 st.error(f"🚨 Error generating response: {str(e)}")
-
+    
     # Handle Clear Chat Button
     if clear_button:
         st.session_state.messages = []
         st.success("Chat history cleared successfully!")
-
+    
     # Export Chat History Button
     if st.session_state.messages:
         chat_log = "\n".join([f"{role.capitalize()}: {msg}" for role, msg in st.session_state.messages])
@@ -515,38 +481,13 @@ elif page == "Chat":
             file_name="chat_log.txt",
             mime="text/plain"
         )
-
+    
     st.markdown('</div>', unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 elif page == "Symptoms":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🧠 Symptom Checker")
     
-    # Section Header
     st.markdown("""
     <p style="font-size: 18px; color: #34495e;">
         Enter your symptoms, and our AI-powered assistant will analyze them to provide potential causes and recommendations.
@@ -570,54 +511,54 @@ elif page == "Symptoms":
     # Step 2: Additional Information
     st.subheader("Step 2: Provide Additional Details (Optional)")
     age_group = st.selectbox("Age Group", ["Child (0-12)", "Teen (13-19)", "Adult (20-64)", "Senior (65+)"])
+    
     medical_conditions = st.multiselect(
         "Pre-existing Medical Conditions",
         ["Diabetes", "Hypertension", "Asthma", "Heart Disease", "None"]
     )
+    
     medications = st.text_area("Current Medications", placeholder="List any medications you are taking")
     
     # Analyze Button
     if st.button("🧠 Analyze Symptoms", key="analyze_symptoms"):
-        # Validate Inputs
         symptoms = [symptom_1, symptom_2, symptom_3]
         valid_symptoms = [s.strip() for s in symptoms if s.strip()]
         
         if not valid_symptoms:
             st.error("❌ Please enter at least one symptom.")
         else:
-            # Prepare Prompt for LLM
             try:
                 llm = get_llm("symptoms")
                 profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
+                
                 prompt = f"""
-                You are a professional medical assistant AI analyzing patient-reported symptoms.
-                Use the following guidelines:
-                - Be empathetic, informative, and clear.
-                - Always mention that you're not a substitute for real medical advice.
-                - If unsure, recommend consulting a physician.
+You are an expert medical assistant AI helping patients understand their reported symptoms. 
+Your role is to provide clear, empathetic, and informative guidance based on the input provided. 
 
-                Patient Profile: {profile_info}
-                Reported Symptoms: {', '.join(valid_symptoms)}
-                Duration: {duration}
-                Severity: {severity}
-                Location: {location}
-                Age Group: {age_group}
-                Pre-existing Conditions: {', '.join(medical_conditions) if medical_conditions else 'None'}
-                Current Medications: {medications}
+Please follow these guidelines:
+- Always remind the user that this is not a substitute for professional medical advice.
+- Prioritize safety: If symptoms suggest a serious condition, advise immediate consultation.
+- Be specific about possible conditions, risk factors, and actionable steps.
 
-                Provide a detailed analysis including:
-                1. Possible causes or conditions based on symptoms.
-                2. Recommended actions or precautions.
-                3. When to consult a doctor.
+Patient Profile: {profile_info}
+Reported Symptoms: {', '.join(valid_symptoms)}
+Duration: {duration}
+Severity: {severity}
+Location: {location}
+Age Group: {age_group}
+Pre-existing Conditions: {', '.join(medical_conditions) if medical_conditions else 'None'}
+Current Medications: {medications}
 
-                Output format:
-                ### 🔍 Symptom Analysis
-                - **Possible Causes**: [List possible causes]
-                - **Recommendations**: [Provide actionable advice]
-                - **When to See a Doctor**: [Specify urgency]
+Please structure your response clearly with the following headings:
 
-                Answer:
+### 🔍 Symptom Analysis
+- **Possible Causes**: Provide a list of likely causes, from most common to less common but still relevant.
+- **Recommendations**: Suggest actions the user can take, such as lifestyle changes, OTC remedies, or self-care practices.
+- **When to See a Doctor**: Explain under what circumstances the user should seek professional help.
+
+Answer:
                 """
+                
                 with st.spinner("🧠 Analyzing symptoms..."):
                     response = llm.invoke(prompt).strip()
                 
@@ -626,9 +567,10 @@ elif page == "Symptoms":
                 
                 st.markdown("### 🧠 Symptom Analysis")
                 st.markdown(response)
+            
             except Exception as e:
                 st.error(f"🚨 Error analyzing symptoms: {str(e)}")
-
+    
     # Export Analysis Button
     if "symptom_analysis" in st.session_state and st.session_state.symptom_analysis:
         st.download_button(
@@ -637,17 +579,8 @@ elif page == "Symptoms":
             file_name="symptom_analysis.txt",
             mime="text/plain"
         )
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
-
-
-
-
-
-
     
+    st.markdown('</div>', unsafe_allow_html=True)
 
 elif page == "Treatment":
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -678,6 +611,7 @@ elif page == "Treatment":
         "Pre-existing Medical Conditions",
         ["Diabetes", "Hypertension", "Asthma", "Heart Disease", "None"]
     )
+    
     medications = st.text_area("Current Medications", placeholder="List any medications you are taking")
     
     # Generate Treatment Plan Button
@@ -690,13 +624,14 @@ elif page == "Treatment":
             try:
                 llm = get_llm("treatment")
                 profile_name = st.session_state.profile_data.get("name", "Unknown")
+                
                 prompt = f"""
                 You are a professional medical assistant AI creating a personalized, phase-wise treatment plan.
                 Use the following guidelines:
                 - Be empathetic, informative, and clear.
                 - Always mention that you're not a substitute for real medical advice.
                 - If unsure, recommend consulting a physician.
-
+                
                 Patient Name: {profile_name}
                 Condition: {condition}
                 Duration: {duration}
@@ -704,33 +639,32 @@ elif page == "Treatment":
                 Age Group: {age_group}
                 Pre-existing Conditions: {', '.join(medical_conditions) if medical_conditions else 'None'}
                 Current Medications: {medications}
-
+                
                 Provide a detailed, phase-wise treatment plan including:
                 ### Phase 1: Immediate Actions
                 - Medications (with dosages and frequency).
                 - Lifestyle modifications.
-
+                
                 ### Phase 2: Short-Term Goals (1-2 weeks)
                 - Follow-up care recommendations.
                 - Monitoring parameters.
-
+                
                 ### Phase 3: Long-Term Management (Beyond 2 weeks)
                 - Sustained lifestyle changes.
                 - Potential complications to monitor.
-
+                
                 Output format:
                 ### 🩺 Personalized Treatment Plan for {profile_name}
                 #### Phase 1: Immediate Actions
                 - [Provide actionable steps]
-
                 #### Phase 2: Short-Term Goals
                 - [Provide short-term goals]
-
                 #### Phase 3: Long-Term Management
                 - [Provide long-term strategies]
-
+                
                 Answer:
                 """
+                
                 with st.spinner("🧠 Generating treatment plan..."):
                     response = llm.invoke(prompt).strip()
                 
@@ -739,9 +673,10 @@ elif page == "Treatment":
                 
                 st.markdown(f"### 🩺 Personalized Treatment Plan for {profile_name}")
                 st.markdown(response)
+            
             except Exception as e:
                 st.error(f"🚨 Error generating treatment plan: {str(e)}")
-
+    
     # Export Treatment Plan Button
     if "treatment_plan" in st.session_state and st.session_state.treatment_plan:
         st.download_button(
@@ -750,23 +685,27 @@ elif page == "Treatment":
             file_name="treatment_plan.txt",
             mime="text/plain"
         )
-
+    
     # Section: Log Daily Metrics
     st.subheader("Step 3: Log Daily Metrics (Optional)")
     metric_type = st.selectbox("Select Metric Type", ["Glucose Levels", "Blood Pressure", "Peak Flow", "HbA1c"])
+    
     col1, col2 = st.columns(2)
     
     with col1:
         if metric_type == "Glucose Levels":
             glucose_value = st.number_input("Glucose Level (mg/dL)", min_value=50, max_value=300, step=1)
             glucose_date = st.date_input("Date", value=datetime.today())
+        
         elif metric_type == "Blood Pressure":
             systolic = st.number_input("Systolic BP", min_value=90, max_value=200, step=1)
             diastolic = st.number_input("Diastolic BP", min_value=60, max_value=130, step=1)
             bp_date = st.date_input("Date", value=datetime.today())
+        
         elif metric_type == "Peak Flow":
             peak_flow_value = st.number_input("Peak Flow (L/min)", min_value=100, max_value=800, step=1)
             peak_flow_date = st.date_input("Date", value=datetime.today())
+        
         elif metric_type == "HbA1c":
             hba1c_value = st.number_input("HbA1c (%)", min_value=4.0, max_value=12.0, step=0.1)
             hba1c_date = st.date_input("Date", value=datetime.today())
@@ -776,6 +715,7 @@ elif page == "Treatment":
             if metric_type == "Glucose Levels":
                 st.session_state.glucose_log.append({"value": glucose_value, "date": glucose_date.strftime("%Y-%m-%d")})
                 st.success("Glucose level logged successfully!")
+            
             elif metric_type == "Blood Pressure":
                 st.session_state.bp_log.append({
                     "systolic": systolic,
@@ -783,19 +723,21 @@ elif page == "Treatment":
                     "date": bp_date.strftime("%Y-%m-%d")
                 })
                 st.success("Blood pressure logged successfully!")
+            
             elif metric_type == "Peak Flow":
                 st.session_state.asthma_log.append({
                     "peak_flow": peak_flow_value,
                     "date": peak_flow_date.strftime("%Y-%m-%d")
                 })
                 st.success("Peak flow logged successfully!")
+            
             elif metric_type == "HbA1c":
                 st.session_state.hba1c_log.append({
                     "hba1c": hba1c_value,
                     "date": hba1c_date.strftime("%Y-%m-%d")
                 })
                 st.success("HbA1c logged successfully!")
-
+    
     # Section: Historical Data Visualization
     st.subheader("Step 4: Historical Data Visualization")
     visualization_type = st.selectbox("Select Metric to Visualize", ["Glucose Levels", "Blood Pressure", "Peak Flow", "HbA1c"])
@@ -832,24 +774,10 @@ elif page == "Treatment":
         st.session_state.asthma_log = []
         st.session_state.hba1c_log = []
         st.success("All logs have been reset.")
-
+    
     # Footer
     st.markdown('<footer>© Health Assistant 2023</footer>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 elif page == "Diseases":
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -872,6 +800,7 @@ elif page == "Diseases":
     
     # Step 2: Log Episode Details
     st.subheader("Step 2: Log Episode Details")
+    
     if condition == "Diabetes":
         glucose_level = st.number_input("Glucose Level (mg/dL)", min_value=50, max_value=400, step=1)
         insulin_dose = st.number_input("Insulin Dose (units)", min_value=0, max_value=100, step=1)
@@ -891,13 +820,14 @@ elif page == "Diseases":
             What does this mean? How should I adjust my insulin or diet?
             Patient Profile: {json.dumps(st.session_state.profile_data)}
             """
+            
             try:
                 llm = get_llm("diseases")
                 advice = llm.invoke(prompt).strip()
                 st.markdown(f"🧠 **AI Health Advice:** {advice}")
             except Exception as e:
                 st.error(f"🚨 Error generating health advice: {str(e)}")
-
+    
     elif condition == "Hypertension":
         systolic = st.number_input("Systolic BP", min_value=90, max_value=200, step=1)
         diastolic = st.number_input("Diastolic BP", min_value=60, max_value=130, step=1)
@@ -916,13 +846,14 @@ elif page == "Diseases":
             My blood pressure is {systolic}/{diastolic} mmHg. What does that mean?
             Patient Profile: {json.dumps(st.session_state.profile_data)}
             """
+            
             try:
                 llm = get_llm("diseases")
                 advice = llm.invoke(prompt).strip()
                 st.markdown(f"🧠 **AI Health Advice:** {advice}")
             except Exception as e:
                 st.error(f"🚨 Error generating health advice: {str(e)}")
-
+    
     elif condition == "Asthma":
         triggers = st.text_area("Triggers Today (e.g., pollen, dust, exercise)")
         severity = st.slider("Severity (1-10)", 1, 10, key="severity_slider")
@@ -944,13 +875,14 @@ elif page == "Diseases":
             How can I manage severity level {severity} episodes?
             Patient Profile: {json.dumps(st.session_state.profile_data)}
             """
+            
             try:
                 llm = get_llm("diseases")
                 advice = llm.invoke(prompt).strip()
                 st.markdown(f"🧠 **AI Health Advice:** {advice}")
             except Exception as e:
                 st.error(f"🚨 Error generating health advice: {str(e)}")
-
+    
     # Step 3: Historical Data Visualization
     st.subheader("Step 3: Historical Data Visualization")
     visualization_type = st.selectbox("Select Metric to Visualize", ["Glucose Levels", "Blood Pressure", "Peak Flow"])
@@ -972,7 +904,7 @@ elif page == "Diseases":
         fig = px.line(df_asthma, x='date', y='peak_flow', title='Peak Flow Over Time')
         fig.update_layout(yaxis_title="Peak Flow (L/min)", xaxis_title="Date")
         st.plotly_chart(fig, use_container_width=True)
-
+    
     # Step 4: Reset Logs
     st.subheader("Step 4: Reset Logged Episodes")
     if st.button("🔄 Reset All Logs", key="reset_logs"):
@@ -980,20 +912,23 @@ elif page == "Diseases":
         st.session_state.bp_log = []
         st.session_state.asthma_log = []
         st.success("All logs have been reset.")
-
+    
     # Export Logs Button
     if st.session_state.glucose_log or st.session_state.bp_log or st.session_state.asthma_log:
         logs_data = ""
+        
         if st.session_state.glucose_log:
             logs_data += "Glucose Logs:\n" + "\n".join([
                 f"{log['date']}: {log['glucose_level']} mg/dL, Insulin {log['insulin_dose']} units"
                 for log in st.session_state.glucose_log
-            ]) + "\n\n"
+            ]) + "\n"
+        
         if st.session_state.bp_log:
             logs_data += "Blood Pressure Logs:\n" + "\n".join([
                 f"{log['date']}: {log['systolic']}/{log['diastolic']} mmHg"
                 for log in st.session_state.bp_log
-            ]) + "\n\n"
+            ]) + "\n"
+        
         if st.session_state.asthma_log:
             logs_data += "Asthma Logs:\n" + "\n".join([
                 f"{log['date']}: Triggers - {log['triggers']}, Severity - {log['severity']}, Peak Flow - {log['peak_flow']} L/min"
@@ -1006,27 +941,20 @@ elif page == "Diseases":
             file_name="disease_logs.txt",
             mime="text/plain"
         )
-
+    
     st.markdown('</div>', unsafe_allow_html=True)
-
-
-
-
-
-
-
-
 
 elif page == "Reports":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 📊 Ultimate Health Analytics Dashboard")
+    
     # Section Header
     st.markdown("""
     <p style="font-size: 18px; color: #34495e;">
         Analyze your health metrics, generate detailed reports, and visualize trends.
     </p>
     """, unsafe_allow_html=True)
-
+    
     # Initialize session state analytics data if not exists
     if "analytics_data" not in st.session_state:
         st.session_state.analytics_data = {
@@ -1040,81 +968,95 @@ elif page == "Reports":
             "symptoms": ["Headache", "Fatigue", "Nausea"],
             "symptom_frequency": [3, 2, 1],  # Example symptom frequencies
         }
-
-    # Ensure all lists in analytics_data are the same length
+    
+    # Ensure all lists in analytics_data are of the same length
     def pad_or_truncate_lists(data_dict):
         """Ensure all lists in the dictionary are of the same length."""
         max_length = max(len(lst) for lst in data_dict.values())
+        
         for key in data_dict:
             current_length = len(data_dict[key])
             if current_length < max_length:
                 data_dict[key].extend([None] * (max_length - current_length))
             elif current_length > max_length:
                 data_dict[key] = data_dict[key][:max_length]
+        
         return data_dict
-
+    
     # Apply padding/truncation to analytics_data
     st.session_state.analytics_data = pad_or_truncate_lists(st.session_state.analytics_data)
-
+    
     # Step 1: Log New Metrics
     st.subheader("Step 1: Log New Health Metrics")
     col1, col2 = st.columns(2)
+    
     with col1:
         metric_type = st.selectbox(
             "Select Metric Type",
             ["Heart Rate", "Blood Glucose", "Blood Pressure", "Peak Flow", "HbA1c"]
         )
+        
         if metric_type == "Heart Rate":
             value = st.number_input("Heart Rate (bpm)", min_value=40, max_value=140, step=1)
+        
         elif metric_type == "Blood Glucose":
             value = st.number_input("Blood Glucose (mg/dL)", min_value=50, max_value=300, step=1)
+        
         elif metric_type == "Blood Pressure":
             systolic = st.number_input("Systolic BP (mmHg)", min_value=90, max_value=200, step=1)
             diastolic = st.number_input("Diastolic BP (mmHg)", min_value=60, max_value=130, step=1)
+        
         elif metric_type == "Peak Flow":
             value = st.number_input("Peak Flow (L/min)", min_value=100, max_value=800, step=1)
+        
         elif metric_type == "HbA1c":
             value = st.number_input("HbA1c (%)", min_value=4.0, max_value=12.0, step=0.1)
-
+    
     with col2:
         log_date = st.date_input("Log Date", value=datetime.today())
+        
         if st.button("✅ Log Metric"):
             if metric_type == "Heart Rate":
                 st.session_state.analytics_data["heart_rates"].append(value)
                 st.session_state.analytics_data["dates"].append(log_date.strftime("%Y-%m-%d"))
                 st.success(f"Logged Heart Rate: {value} bpm on {log_date.strftime('%Y-%m-%d')}")
+            
             elif metric_type == "Blood Glucose":
                 st.session_state.analytics_data["glucose_levels"].append(value)
                 st.session_state.analytics_data["dates"].append(log_date.strftime("%Y-%m-%d"))
                 st.success(f"Logged Blood Glucose: {value} mg/dL on {log_date.strftime('%Y-%m-%d')}")
+            
             elif metric_type == "Blood Pressure":
                 st.session_state.analytics_data["blood_pressure_systolic"].append(systolic)
                 st.session_state.analytics_data["blood_pressure_diastolic"].append(diastolic)
                 st.session_state.analytics_data["dates"].append(log_date.strftime("%Y-%m-%d"))
                 st.success(f"Logged Blood Pressure: {systolic}/{diastolic} mmHg on {log_date.strftime('%Y-%m-%d')}")
+            
             elif metric_type == "Peak Flow":
                 st.session_state.analytics_data["peak_flow"].append(value)
                 st.session_state.analytics_data["dates"].append(log_date.strftime("%Y-%m-%d"))
                 st.success(f"Logged Peak Flow: {value} L/min on {log_date.strftime('%Y-%m-%d')}")
+            
             elif metric_type == "HbA1c":
                 st.session_state.analytics_data["hba1c"].append(value)
                 st.session_state.analytics_data["dates"].append(log_date.strftime("%Y-%m-%d"))
                 st.success(f"Logged HbA1c: {value}% on {log_date.strftime('%Y-%m-%d')}")
-
+    
     # Step 2: Display Latest Metrics
     st.subheader("### 📋 Latest Metrics")
+    
     dates = st.session_state.analytics_data.get("dates", [])
     heart_rates = st.session_state.analytics_data.get("heart_rates", [])
     glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
     peak_flow = st.session_state.analytics_data.get("peak_flow", [])
     hba1c = st.session_state.analytics_data.get("hba1c", [])
-
+    
     latest_date = dates[-1] if len(dates) > 0 else "N/A"
     latest_hr = heart_rates[-1] if len(heart_rates) > 0 and isinstance(heart_rates[-1], (int, float)) else "N/A"
     latest_glucose = glucose_levels[-1] if len(glucose_levels) > 0 and isinstance(glucose_levels[-1], (int, float)) else "N/A"
     latest_peak = peak_flow[-1] if len(peak_flow) > 0 and isinstance(peak_flow[-1], (int, float)) else "N/A"
     latest_hba1c = hba1c[-1] if len(hba1c) > 0 and isinstance(hba1c[-1], (int, float)) else "N/A"
-
+    
     st.markdown(f"""
     <div class="metric-card">
         <strong>Date:</strong> {latest_date}<br>
@@ -1124,54 +1066,34 @@ elif page == "Reports":
         <strong>HbA1c:</strong> {latest_hba1c} %
     </div>
     """, unsafe_allow_html=True)
-
+    
     # Step 3: Trend Analysis
     st.subheader("### 📈 Trend Analysis")
+    
     hr_trend = (
-        "↑" if len(heart_rates) > 1
-        and isinstance(heart_rates[-1], (int, float))
-        and isinstance(heart_rates[-2], (int, float))
-        and heart_rates[-1] > heart_rates[-2]
-        else "↓"
-        if len(heart_rates) > 1
-        and isinstance(heart_rates[-1], (int, float))
-        and isinstance(heart_rates[-2], (int, float))
+        "↑" if len(heart_rates) > 1 and isinstance(heart_rates[-1], (int, float)) and isinstance(heart_rates[-2], (int, float)) and heart_rates[-1] > heart_rates[-2]
+        else "↓" if len(heart_rates) > 1 and isinstance(heart_rates[-1], (int, float)) and isinstance(heart_rates[-2], (int, float)) and heart_rates[-1] < heart_rates[-2]
         else "-"
     )
+    
     glucose_trend = (
-        "↑" if len(glucose_levels) > 1
-        and isinstance(glucose_levels[-1], (int, float))
-        and isinstance(glucose_levels[-2], (int, float))
-        and glucose_levels[-1] > glucose_levels[-2]
-        else "↓"
-        if len(glucose_levels) > 1
-        and isinstance(glucose_levels[-1], (int, float))
-        and isinstance(glucose_levels[-2], (int, float))
+        "↑" if len(glucose_levels) > 1 and isinstance(glucose_levels[-1], (int, float)) and isinstance(glucose_levels[-2], (int, float)) and glucose_levels[-1] > glucose_levels[-2]
+        else "↓" if len(glucose_levels) > 1 and isinstance(glucose_levels[-1], (int, float)) and isinstance(glucose_levels[-2], (int, float)) and glucose_levels[-1] < glucose_levels[-2]
         else "-"
     )
+    
     peak_trend = (
-        "↑" if len(peak_flow) > 1
-        and isinstance(peak_flow[-1], (int, float))
-        and isinstance(peak_flow[-2], (int, float))
-        and peak_flow[-1] > peak_flow[-2]
-        else "↓"
-        if len(peak_flow) > 1
-        and isinstance(peak_flow[-1], (int, float))
-        and isinstance(peak_flow[-2], (int, float))
+        "↑" if len(peak_flow) > 1 and isinstance(peak_flow[-1], (int, float)) and isinstance(peak_flow[-2], (int, float)) and peak_flow[-1] > peak_flow[-2]
+        else "↓" if len(peak_flow) > 1 and isinstance(peak_flow[-1], (int, float)) and isinstance(peak_flow[-2], (int, float)) and peak_flow[-1] < peak_flow[-2]
         else "-"
     )
+    
     hba1c_trend = (
-        "↑" if len(hba1c) > 1
-        and isinstance(hba1c[-1], (int, float))
-        and isinstance(hba1c[-2], (int, float))
-        and hba1c[-1] > hba1c[-2]
-        else "↓"
-        if len(hba1c) > 1
-        and isinstance(hba1c[-1], (int, float))
-        and isinstance(hba1c[-2], (int, float))
+        "↑" if len(hba1c) > 1 and isinstance(hba1c[-1], (int, float)) and isinstance(hba1c[-2], (int, float)) and hba1c[-1] > hba1c[-2]
+        else "↓" if len(hba1c) > 1 and isinstance(hba1c[-1], (int, float)) and isinstance(hba1c[-2], (int, float)) and hba1c[-1] < hba1c[-2]
         else "-"
     )
-
+    
     st.markdown(f"""
     <div class="metric-card">
         <strong>Heart Rate Trend:</strong> {hr_trend}<br>
@@ -1180,57 +1102,76 @@ elif page == "Reports":
         <strong>HbA1c Trend:</strong> {hba1c_trend}
     </div>
     """, unsafe_allow_html=True)
-
+    
     # Step 4: Generate AI-Driven Health Summary
     st.subheader("Step 4: Generate AI-Driven Health Summary")
+    
     ai_summary = None  # Initialize ai_summary to avoid NameError
+    
     if st.button("🧠 Generate AI Report Summary"):
         try:
             profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
+            
+            heart_rates = st.session_state.analytics_data.get("heart_rates", [])
+            glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
+            peak_flow = st.session_state.analytics_data.get("peak_flow", [])
+            hba1c = st.session_state.analytics_data.get("hba1c", [])
+            
             recent_hr = ', '.join(map(str, [x for x in heart_rates[-7:] if isinstance(x, (int, float))]))
             recent_glucose = ', '.join(map(str, [x for x in glucose_levels[-7:] if isinstance(x, (int, float))]))
             recent_peak = ', '.join(map(str, [x for x in peak_flow[-7:] if isinstance(x, (int, float))]))
             recent_hba1c = ', '.join(map(str, [x for x in hba1c[-7:] if isinstance(x, (int, float))]))
-
+            
             prompt = f"""
             You are a professional healthcare AI assistant tasked with providing a personalized health summary.
+            
             Patient Profile: {profile_info}
             Recent Metrics:
             - Heart Rate (bpm): [{recent_hr}]
             - Blood Glucose (mg/dL): [{recent_glucose}]
             - Peak Flow (L/min): [{recent_peak}]
             - HbA1c (%): [{recent_hba1c}]
+            
             Instructions:
             1. Analyze trends over time and note if values are increasing, decreasing, or stable.
             2. Interpret what these trends may mean in terms of health implications.
             3. Provide simple, easy-to-understand explanations without medical jargon.
             4. Suggest practical lifestyle changes (e.g., diet, exercise).
             5. Mention when a medical checkup is recommended.
+            
             Output format:
             ### 🔍 Trend Overview
             - Heart Rate: [Stable/Increasing/Decreasing]
             - Blood Glucose: [Stable/Increasing/Decreasing]
             - Peak Flow: [Stable/Increasing/Decreasing]
             - HbA1c: [Stable/Increasing/Decreasing]
+            
             ### 🩺 Health Implications
             Explain what the trend might indicate about the patient's current condition.
+            
             ### 💡 Recommendations
             Provide 2-3 lifestyle suggestions tailored to the patient's data.
+            
             ### ⚠️ Important Notes
             Include any warnings or reminders about consulting a doctor.
             """
+            
             llm = get_llm("reports")
+            
             with st.spinner("🧠 Generating AI-driven health summary..."):
                 response = llm.invoke(prompt).strip()
+            
             if not response or "error" in response.lower():
                 response = "I'm unable to generate a health summary at this time due to technical issues. Please try again later."
+            
             st.markdown("### 🧠 AI Health Analysis")
             st.markdown(response)
             ai_summary = response  # Assign generated summary to ai_summary
+        
         except Exception as e:
             st.error(f"🚨 Error generating AI summary: {str(e)}")
-
-      # Step 5: Visualize Historical Data
+    
+    # Step 5: Visualize Historical Data
     st.subheader("Step 5: Visualize Historical Data")
     
     # Ensure session state analytics data exists
@@ -1251,14 +1192,14 @@ elif page == "Reports":
     def pad_or_truncate_lists(data_dict):
         """Ensure all lists in the dictionary are of the same length."""
         max_length = max(len(lst) for lst in data_dict.values())
+        
         for key in data_dict:
             current_length = len(data_dict[key])
             if current_length < max_length:
-                # Pad with None if the list is shorter
                 data_dict[key].extend([None] * (max_length - current_length))
             elif current_length > max_length:
-                # Truncate if the list is longer
                 data_dict[key] = data_dict[key][:max_length]
+        
         return data_dict
     
     # Apply padding/truncation to analytics_data
@@ -1279,7 +1220,7 @@ elif page == "Reports":
     if visualization_type == "Heart Rate Trend":
         heart_rates = st.session_state.analytics_data.get("heart_rates", [])
         dates = st.session_state.analytics_data.get("dates", [])
-    
+        
         # Ensure both lists are the same length before creating DataFrame
         if len(heart_rates) != len(dates):
             st.error("🚨 Data inconsistency detected. Please log metrics again.")
@@ -1307,7 +1248,7 @@ elif page == "Reports":
         bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
         bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
         dates = st.session_state.analytics_data.get("dates", [])
-    
+        
         # Ensure all lists are the same length before creating DataFrame
         if len(bp_systolic) != len(dates) or len(bp_diastolic) != len(dates):
             st.error("🚨 Data inconsistency detected. Please log metrics again.")
@@ -1345,7 +1286,7 @@ elif page == "Reports":
     elif visualization_type == "Blood Glucose Trend with Reference Line":
         glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
         dates = st.session_state.analytics_data.get("dates", [])
-    
+        
         # Ensure both lists are the same length before creating DataFrame
         if len(glucose_levels) != len(dates):
             st.error("🚨 Data inconsistency detected. Please log metrics again.")
@@ -1372,7 +1313,7 @@ elif page == "Reports":
     elif visualization_type == "Symptom Frequency Pie Chart":
         symptoms = st.session_state.analytics_data.get("symptoms", [])
         symptom_frequency = st.session_state.analytics_data.get("symptom_frequency", [])
-    
+        
         # Ensure both lists are the same length before creating DataFrame
         if len(symptoms) != len(symptom_frequency):
             st.error("🚨 Data inconsistency detected. Please log metrics again.")
@@ -1391,15 +1332,16 @@ elif page == "Reports":
                 hovertemplate="Symptom: %{label}<br>Frequency: %{value}",
             )
             st.plotly_chart(fig_pie, use_container_width=True)
-
+    
     # Metrics Summary Section
     st.subheader("Metrics Summary")
+    
     # Key Health Indicators with Trend Deltas
     heart_rates = st.session_state.analytics_data.get("heart_rates", [])
     glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
     bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
     bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
-
+    
     # Helper function to determine metric status
     def get_metric_status(value, low, high):
         """Return color and status based on value range."""
@@ -1409,11 +1351,11 @@ elif page == "Reports":
             return "✅ Normal", "green"
         else:
             return "⚠️ Abnormal", "red"
-
+    
     hr_status, hr_color = get_metric_status(heart_rates[-1], 60, 100) if heart_rates else ("-", "gray")
     glucose_status, glucose_color = get_metric_status(glucose_levels[-1], 70, 140) if glucose_levels else ("-", "gray")
     bp_status, bp_color = get_metric_status(bp_systolic[-1], 90, 120) if bp_systolic else ("-", "gray")
-
+    
     st.markdown(
         f"""
         <div style="display: flex; justify-content: space-between; margin-top: 20px;">
@@ -1431,7 +1373,7 @@ elif page == "Reports":
             </div>
             <div style="background-color: {bp_color}; padding: 10px; border-radius: 5px; text-align: center;">
                 <strong>Blood Pressure</strong><br>
-                Value: {bp_systolic[-1]}/{bp_diastolic[-1] if bp_diastolic else 'N/A'} mmHg<br>
+                Value: {bp_systolic[-1] if bp_systolic else 'N/A'}/{bp_diastolic[-1] if bp_diastolic else 'N/A'} mmHg<br>
                 Trend: {hr_trend}<br>
                 Status: {bp_status}
             </div>
@@ -1439,9 +1381,10 @@ elif page == "Reports":
         """,
         unsafe_allow_html=True,
     )
-
+    
     # Step 6: Export Report
     st.subheader("Step 6: Export Report")
+    
     if st.session_state.profile_complete:
         # Export PDF
         pdf_data = export_health_report(ai_summary=ai_summary) if ai_summary else b""
@@ -1451,6 +1394,7 @@ elif page == "Reports":
             file_name="health_report.pdf",
             mime="application/pdf"
         )
+        
         # Export CSV
         csv_data = ""
         metrics_df = pd.DataFrame({
@@ -1471,26 +1415,15 @@ elif page == "Reports":
         )
     else:
         st.warning("⚠️ Complete your profile to enable report export.")
-
+    
     # Footer
     lang = st.session_state.language
     st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
-
+    
     # Debug Mode
     with st.expander("🔧 Debug Mode"):
         st.write("Session State:", st.session_state)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
-
-    # Footer
-    lang = st.session_state.language
-    st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
-
-    # Debug Mode
-    with st.expander("🔧 Debug Mode"):
-        st.write("Session State:", st.session_state)
-
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Footer
