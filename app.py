@@ -279,9 +279,95 @@ def export_health_report(ai_summary=""):
 # Pages
 if page == "Profile":
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### 🧾 User Profile")
-    # Existing profile logic here
+    st.markdown("### 🧾 Complete Your Profile")
+    
+    # Profile Fields
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        name = st.text_input("Full Name", placeholder="Enter your full name")
+        age = st.number_input("Age", min_value=0, max_value=120, step=1, help="Your current age")
+        gender = st.selectbox("Gender", ["Male", "Female", "Other", "Prefer not to say"])
+        email = st.text_input("Email Address", placeholder="Enter your email address")
+        phone = st.text_input("Phone Number", placeholder="Enter your phone number")
+    
+    with col2:
+        height = st.number_input("Height (cm)", min_value=50, max_value=300, step=1, help="Your height in centimeters")
+        weight = st.number_input("Weight (kg)", min_value=10, max_value=300, step=1, help="Your weight in kilograms")
+        allergies = st.text_area("Allergies", placeholder="List any allergies (e.g., peanuts, pollen)")
+        medical_history = st.text_area("Medical History", placeholder="Briefly describe any significant medical conditions or surgeries")
+    
+    # Save Profile Button
+    if st.button("Save Profile", key="save_profile"):
+        if name.strip() == "" or age <= 0 or height <= 0 or weight <= 0:
+            st.error("❌ Please fill in all required fields.")
+        else:
+            bmi = round(weight / ((height / 100) ** 2), 1)
+            st.session_state.profile_data = {
+                "name": name,
+                "age": age,
+                "gender": gender,
+                "email": email,
+                "phone": phone,
+                "height": height,
+                "weight": weight,
+                "bmi": bmi,
+                "allergies": allergies,
+                "medical_history": medical_history
+            }
+            st.session_state.profile_complete = True
+            st.success("✅ Profile saved successfully!")
+    
+    # Reset Profile Button
+    if st.button("🔄 Reset Profile", key="reset_profile"):
+        reset_profile()
+        st.info("ℹ️ Profile has been reset.")
+    
+    # Display Profile Summary if Completed
+    if st.session_state.profile_complete:
+        st.markdown('<br>', unsafe_allow_html=True)
+        st.markdown("#### 📋 Profile Summary")
+        profile_summary = f"""
+        - **Name**: {st.session_state.profile_data.get('name', 'N/A')}
+        - **Age**: {st.session_state.profile_data.get('age', 'N/A')}
+        - **Gender**: {st.session_state.profile_data.get('gender', 'N/A')}
+        - **Email**: {st.session_state.profile_data.get('email', 'N/A')}
+        - **Phone**: {st.session_state.profile_data.get('phone', 'N/A')}
+        - **Height**: {st.session_state.profile_data.get('height', 'N/A')} cm
+        - **Weight**: {st.session_state.profile_data.get('weight', 'N/A')} kg
+        - **BMI**: {st.session_state.profile_data.get('bmi', 'N/A')}
+        - **Allergies**: {st.session_state.profile_data.get('allergies', 'N/A')}
+        - **Medical History**: {st.session_state.profile_data.get('medical_history', 'N/A')}
+        """
+        st.markdown(profile_summary)
+    
     st.markdown('</div>', unsafe_allow_html=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 elif page == "Chat":
     st.markdown('<div class="card">', unsafe_allow_html=True)
