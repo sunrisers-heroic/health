@@ -1199,6 +1199,7 @@ elif page == "Reports":
 
     # Step 4: Generate AI-Driven Health Summary
     st.subheader("Step 4: Generate AI-Driven Health Summary")
+    ai_summary = None  # Initialize ai_summary to avoid NameError
     if st.button("🧠 Generate AI Report Summary"):
         try:
             profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
@@ -1241,7 +1242,7 @@ elif page == "Reports":
                 response = "I'm unable to generate a health summary at this time due to technical issues. Please try again later."
             st.markdown("### 🧠 AI Health Analysis")
             st.markdown(response)
-            ai_summary = response
+            ai_summary = response  # Assign generated summary to ai_summary
         except Exception as e:
             st.error(f"🚨 Error generating AI summary: {str(e)}")
 
@@ -1365,10 +1366,12 @@ elif page == "Reports":
     # Helper function to determine metric status
     def get_metric_status(value, low, high):
         """Return color and status based on value range."""
-        if low <= value <= high:
+        if value is not None and low <= value <= high:
             return "✅ Normal", "green"
-        else:
+        elif value is not None:
             return "⚠️ Abnormal", "red"
+        else:
+            return "-", "gray"
 
     hr_status, hr_color = get_metric_status(heart_rates[-1], 60, 100) if heart_rates else ("-", "gray")
     glucose_status, glucose_color = get_metric_status(glucose_levels[-1], 70, 140) if glucose_levels else ("-", "gray")
@@ -1404,7 +1407,7 @@ elif page == "Reports":
     st.subheader("Step 6: Export Report")
     if st.session_state.profile_complete:
         # Export PDF
-        pdf_data = export_health_report(ai_summary=ai_summary)
+        pdf_data = export_health_report(ai_summary=ai_summary) if ai_summary else b""
         st.download_button(
             label="📄 Export Report as PDF",
             data=pdf_data,
@@ -1440,7 +1443,6 @@ elif page == "Reports":
     with st.expander("🔧 Debug Mode"):
         st.write("Session State:", st.session_state)
     st.markdown('</div>', unsafe_allow_html=True)
- 
 
 
 
