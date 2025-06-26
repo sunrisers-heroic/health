@@ -1253,11 +1253,125 @@ elif page == "Reports":
 
 
             
-
 elif page == "Settings":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### ⚙️ Settings")
-    # Existing settings logic here
+    
+    # Section Header
+    st.markdown("""
+    <p style="font-size: 18px; color: #34495e;">
+        Manage your app preferences, reset data, and configure settings.
+    </p>
+    """, unsafe_allow_html=True)
+
+    # Step 1: Reset Profile and Data
+    st.subheader("Step 1: Reset Profile and Data")
+    st.info("⚠️ Resetting will clear all your saved data, including profile, logs, and analytics. This action cannot be undone.")
+    if st.button("🔄 Reset All Data"):
+        try:
+            reset_profile()
+            st.session_state.messages = []
+            st.session_state.glucose_log = []
+            st.session_state.bp_log = []
+            st.session_state.asthma_log = []
+            st.session_state.health_data = {}
+            st.session_state.analytics_data = {
+                "dates": [datetime.now().strftime("%Y-%m-%d")],
+                "heart_rates": [72],
+                "glucose_levels": [90],
+                "blood_pressure_systolic": [120],
+                "blood_pressure_diastolic": [80],
+                "peak_flow": [400],
+                "hba1c": [5.7]
+            }
+            st.success("✅ All data has been reset successfully!")
+        except Exception as e:
+            st.error(f"🚨 Error resetting data: {str(e)}")
+
+    # Step 2: Language Preferences
+    st.subheader("Step 2: Language Preferences")
+    lang_options = {
+       
+    }
+    selected_lang = st.selectbox(
+        "Select App Language",
+        list(lang_options.keys()),
+        index=list(lang_options.values()).index(st.session_state.language)
+    )
+    if st.button("🌍 Update Language"):
+        st.session_state.language = lang_options[selected_lang]
+        st.success(f"✅ Language updated to {selected_lang}!")
+
+    # Step 3: Export/Import Data
+    st.subheader("Step 3: Export/Import Data")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("#### Export Data")
+        if st.button("📤 Export Data as JSON"):
+            try:
+                export_data = {
+                    "profile_data": st.session_state.profile_data,
+                    "analytics_data": st.session_state.analytics_data,
+                    "messages": st.session_state.messages,
+                    "glucose_log": st.session_state.glucose_log,
+                    "bp_log": st.session_state.bp_log,
+                    "asthma_log": st.session_state.asthma_log,
+                    "health_data": st.session_state.health_data
+                }
+                json_data = json.dumps(export_data, indent=4)
+                st.download_button(
+                    label="💾 Download JSON File",
+                    data=json_data,
+                    file_name="health_data_export.json",
+                    mime="application/json"
+                )
+                st.success("✅ Data exported successfully!")
+            except Exception as e:
+                st.error(f"🚨 Error exporting data: {str(e)}")
+
+    with col2:
+        st.markdown("#### Import Data")
+        uploaded_file = st.file_uploader("Upload JSON File", type=["json"])
+        if uploaded_file is not None:
+            try:
+                imported_data = json.load(uploaded_file)
+                st.session_state.profile_data = imported_data.get("profile_data", {})
+                st.session_state.analytics_data = imported_data.get("analytics_data", {})
+                st.session_state.messages = imported_data.get("messages", [])
+                st.session_state.glucose_log = imported_data.get("glucose_log", [])
+                st.session_state.bp_log = imported_data.get("bp_log", [])
+                st.session_state.asthma_log = imported_data.get("asthma_log", [])
+                st.session_state.health_data = imported_data.get("health_data", {})
+                st.success("✅ Data imported successfully!")
+            except Exception as e:
+                st.error(f"🚨 Error importing data: {str(e)}")
+
+    # Step 4: App Theme Customization
+    st.subheader("Step 4: App Theme Customization")
+    theme_options = {
+        "Default": "default",
+        "Dark Mode": "dark",
+        "Light Mode": "light"
+    }
+    selected_theme = st.selectbox(
+        "Select App Theme",
+        list(theme_options.keys()),
+        index=list(theme_options.values()).index(st.session_state.theme)
+    )
+    if st.button("🎨 Update Theme"):
+        st.session_state.theme = theme_options[selected_theme]
+        st.success(f"✅ Theme updated to {selected_theme}!")
+        st.experimental_rerun()
+
+    # Footer
+    lang = st.session_state.language
+    st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
+
+    # Debug Mode
+    with st.expander("🔧 Debug Mode"):
+        st.write("Session State:", st.session_state)
+
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Footer
