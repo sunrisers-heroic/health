@@ -955,7 +955,6 @@ elif page == "Diseases":
 
 
 
-
 elif page == "Reports":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 📊 Ultimate Health Analytics Dashboard")
@@ -1030,8 +1029,16 @@ elif page == "Reports":
     if st.button("🧠 Generate AI Report Summary"):
         try:
             profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
+            dates = st.session_state.analytics_data.get("dates", [])
+            heart_rates = st.session_state.analytics_data.get("heart_rates", [])
+            glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
+            bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
+            bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
+            peak_flow = st.session_state.analytics_data.get("peak_flow", [])
+            hba1c = st.session_state.analytics_data.get("hba1c", [])
+
             prompt = f"""
-            You are a professional medical assistant AI analyzing health metrics.
+            You are a professional healthcare AI assistant tasked with providing a personalized health summary.
             Use the following guidelines:
             - Be empathetic, informative, and clear.
             - Always mention that you're not a substitute for real medical advice.
@@ -1039,11 +1046,12 @@ elif page == "Reports":
 
             Patient Profile: {profile_info}
             Latest Metrics:
-            - Heart Rate: {st.session_state.analytics_data['heart_rates'][-1]} bpm
-            - Blood Glucose: {st.session_state.analytics_data['glucose_levels'][-1]} mg/dL
-            - Blood Pressure: {st.session_state.analytics_data['blood_pressure_systolic'][-1]}/{st.session_state.analytics_data['blood_pressure_diastolic'][-1]} mmHg
-            - Peak Flow: {st.session_state.analytics_data['peak_flow'][-1]} L/min
-            - HbA1c: {st.session_state.analytics_data['hba1c'][-1]}%
+            - Date: {dates[-1] if len(dates) > 0 else 'N/A'}
+            - Heart Rate: {heart_rates[-1] if len(heart_rates) > 0 else 'N/A'} bpm
+            - Blood Glucose: {glucose_levels[-1] if len(glucose_levels) > 0 else 'N/A'} mg/dL
+            - Blood Pressure: {bp_systolic[-1]}/{bp_diastolic[-1]} mmHg
+            - Peak Flow: {peak_flow[-1] if len(peak_flow) > 0 else 'N/A'} L/min
+            - HbA1c: {hba1c[-1] if len(hba1c) > 0 else 'N/A'} %
 
             Provide a detailed analysis including:
             1. Trends in metrics over time.
@@ -1052,13 +1060,23 @@ elif page == "Reports":
             4. Warnings or reminders about consulting a doctor.
 
             Output format:
-            ### 🧠 AI Health Analysis
-            - **Trends**: [Explain trends in metrics]
-            - **Implications**: [Explain what the trends might mean]
-            - **Recommendations**: [Provide actionable advice]
-            - **Warnings**: [Include any important notes]
+            ### 🔍 Trend Overview
+            - Heart Rate: [Stable/Increasing/Decreasing]
+            - Blood Glucose: [Stable/Increasing/Decreasing]
+            - Blood Pressure: [Stable/Increasing/Decreasing]
+            - Peak Flow: [Stable/Increasing/Decreasing]
+            - HbA1c: [Stable/Increasing/Decreasing]
 
-            Answer:
+            ### 🩺 Health Implications
+            Explain what the trend might indicate about the patient's current condition.
+
+            ### 💡 Recommendations
+            Provide 2-3 lifestyle suggestions tailored to the patient's data.
+
+            ### ⚠️ Important Notes
+            Include any warnings or reminders about consulting a doctor.
+
+            Remember: Keep everything conversational and easy to understand.
             """
             llm = get_llm("reports")
             with st.spinner("🧠 Generating AI-driven health summary..."):
@@ -1125,7 +1143,7 @@ elif page == "Reports":
         st.info("ℹ️ No historical data available yet.")
 
     # Step 4: Export PDF Report
-    st.subheader("Step 4: Export PDF Report")
+    st.subheader("Step 4: Export Report")
     if st.session_state.profile_complete:
         pdf_data = export_health_report(ai_summary=ai_summary)
         st.download_button(
@@ -1133,6 +1151,27 @@ elif page == "Reports":
             data=pdf_data,
             file_name="health_report.pdf",
             mime="application/pdf"
+        )
+
+        # Export as CSV
+        csv_data = ""
+        if st.session_state.analytics_data:
+            df_export = pd.DataFrame({
+                "Date": dates,
+                "Heart Rate (bpm)": heart_rates,
+                "Blood Glucose (mg/dL)": glucose_levels,
+                "Systolic BP (mmHg)": bp_systolic,
+                "Diastolic BP (mmHg)": bp_diastolic,
+                "Peak Flow (L/min)": peak_flow,
+                "HbA1c (%)": hba1c
+            })
+            csv_data = df_export.to_csv(index=False)
+        
+        st.download_button(
+            label="💾 Export Metrics as CSV",
+            data=csv_data,
+            file_name="health_metrics.csv",
+            mime="text/csv"
         )
 
     # Step 5: Manage Logs
@@ -1183,7 +1222,6 @@ elif page == "Reports":
         st.write("Session State:", st.session_state)
 
     st.markdown('</div>', unsafe_allow_html=True)
-
 
 
 
