@@ -477,19 +477,42 @@ elif page == "Chat":
                 llm = get_llm("chat")
                 profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
                 chat_history = ''.join([f'{r.capitalize()}: {c}' for r, c in st.session_state.messages[-6:]])
-                prompt = f"""
-                You are a professional medical assistant AI helping a patient with their health queries.
-                Use the following guidelines:
-                - Be empathetic, informative, and clear.
-                - Always mention that you're not a substitute for real medical advice.
-                - If unsure, recommend consulting a physician.
-
-                Patient Profile: {profile_info}
-                Chat History: {chat_history}
-                User Question: "{user_input}"
-
-                Answer:
-                """
+               prompt = f"""
+                        You are a professional medical assistant AI creating a personalized, phase-wise treatment plan.
+                        Your goal is to provide a comprehensive, easy-to-follow guide tailored to the patient’s condition and background.
+                        
+                        Guidelines:
+                        - Always state that this is not a substitute for professional medical advice.
+                        - Be empathetic and prioritize patient safety.
+                        - Include practical, realistic steps that the patient can implement.
+                        
+                        Patient Name: {profile_name}
+                        Condition: {condition}
+                        Duration: {duration}
+                        Severity: {severity}
+                        Age Group: {age_group}
+                        Pre-existing Conditions: {', '.join(medical_conditions) if medical_conditions else 'None'}
+                        Current Medications: {medications}
+                        
+                        Provide a detailed, phase-wise treatment plan including:
+                        
+                        ### Phase 1: Immediate Actions
+                        - Specific medications (dosages and frequency).
+                        - Lifestyle modifications (diet, rest, activity).
+                        
+                        ### Phase 2: Short-Term Goals (1-2 weeks)
+                        - Follow-up care recommendations.
+                        - Monitoring parameters (what to track daily or weekly).
+                        
+                        ### Phase 3: Long-Term Management (Beyond 2 weeks)
+                        - Sustained lifestyle changes.
+                        - Potential complications to monitor.
+                        - Tips for managing flare-ups or setbacks.
+                        
+                        Format your response clearly using markdown headers and bullet points.
+                        
+                        Answer:
+                        """
                 with st.spinner("🧠 Generating response..."):
                     response = llm.invoke(prompt).strip()
                 if not response or "error" in response.lower():
