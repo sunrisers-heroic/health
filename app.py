@@ -247,87 +247,81 @@ LANGUAGES = {
 # Function to export data as PDF including user profile
 
 
+from fpdf import FPDF
 
-def export_health_report(ai_summary=""):
+def export_health_report(ai_summary=None):
+    """
+    Generate a PDF health report with analytics data and AI summary.
+    :param ai_summary: (str) AI-generated health summary (optional).
+    :return: (bytes) PDF file content in bytes.
+    """
+    # Initialize PDF object
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Arial", size=12)
 
-    # Title with border and background
-    pdf.set_fill_color(200, 220, 255)
-    pdf.cell(0, 15, txt="Health Report Summary", ln=True, align='C', fill=True)
+    # Add Title
+    pdf.set_font("Arial", style="B", size=16)
+    pdf.cell(0, 10, "HealthAI Report", ln=True, align="C")
     pdf.ln(10)
 
-    # --------------------------
-    # Patient Profile Section
-    # --------------------------
-    pdf.set_font("Arial", 'B', 14)
-    pdf.set_text_color(0, 51, 102)
-    pdf.cell(0, 10, "👤 Patient Profile", ln=True)
-    pdf.set_text_color(0, 0, 0)
-    pdf.set_draw_color(180, 180, 180)
-    pdf.rect(x=10, y=pdf.get_y() - 5, w=190, h=40, style='D')
+    # Add Date
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, f"Report Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
     pdf.ln(5)
 
-    pdf.set_font("Arial", size=12)
-    for k, v in st.session_state.profile_data.items():
-        if v:  # Skip empty fields
-            pdf.cell(0, 8, txt=f"• {k.capitalize()}: {v}", ln=True)
-    pdf.ln(10)
-
-    # --------------------------
-    # Latest Metrics Section
-    # --------------------------
-    pdf.set_font("Arial", 'B', 14)
-    pdf.set_text_color(0, 51, 102)
-    pdf.cell(0, 10, "📊 Latest Metrics", ln=True)
-    pdf.set_text_color(0, 0, 0)
-    pdf.rect(x=10, y=pdf.get_y() - 5, w=190, h=50, style='D')
-    pdf.ln(5)
-
-    dates = st.session_state.analytics_data.get("dates", [])
-    heart_rates = st.session_state.analytics_data.get("heart_rates", [])
-    glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
-    peak_flow = st.session_state.analytics_data.get("peak_flow", [])
-    hba1c = st.session_state.analytics_data.get("hba1c", [])
-
-    pdf.set_font("Arial", size=12)
-    pdf.cell(0, 8, txt=f"• Date: {dates[-1] if len(dates) > 0 else 'N/A'}", ln=True)
-    pdf.cell(0, 8, txt=f"• Heart Rate: {heart_rates[-1] if len(heart_rates) > 0 else 'N/A'} bpm", ln=True)
-    pdf.cell(0, 8, txt=f"• Blood Glucose: {glucose_levels[-1] if len(glucose_levels) > 0 else 'N/A'} mg/dL", ln=True)
-    pdf.cell(0, 8, txt=f"• Peak Flow: {peak_flow[-1] if len(peak_flow) > 0 else 'N/A'} L/min", ln=True)
-    pdf.cell(0, 8, txt=f"• HbA1c: {hba1c[-1] if len(hba1c) > 0 else 'N/A'} %", ln=True)
-    pdf.ln(10)
-
-    # --------------------------
-    # AI Summary Section (if available)
-    # --------------------------
-    if ai_summary:
-        pdf.set_font("Arial", 'B', 14)
-        pdf.set_text_color(0, 51, 102)
-        pdf.cell(0, 10, "🧠 AI Report Summary", ln=True)
-        pdf.set_text_color(0, 0, 0)
-        pdf.rect(x=10, y=pdf.get_y() - 5, w=190, h=60, style='D')  # Border around summary
+    # Add Profile Data (if available)
+    if "profile_data" in st.session_state and st.session_state.profile_complete:
+        profile_data = st.session_state.profile_data
+        pdf.set_font("Arial", style="B", size=14)
+        pdf.cell(0, 10, "Patient Profile", ln=True)
+        pdf.set_font("Arial", size=12)
+        pdf.cell(0, 10, f"Age: {profile_data.get('age', 'N/A')}", ln=True)
+        pdf.cell(0, 10, f"Gender: {profile_data.get('gender', 'N/A')}", ln=True)
+        pdf.cell(0, 10, f"Comorbidities: {profile_data.get('comorbidities', 'N/A')}", ln=True)
         pdf.ln(5)
 
+    # Add Latest Metrics
+    analytics_data = st.session_state.analytics_data
+    dates = analytics_data.get("dates", [])
+    heart_rates = analytics_data.get("heart_rates", [])
+    glucose_levels = analytics_data.get("glucose_levels", [])
+    bp_systolic = analytics_data.get("blood_pressure_systolic", [])
+    bp_diastolic = analytics_data.get("blood_pressure_diastolic", [])
+    peak_flow = analytics_data.get("peak_flow", [])
+    hba1c = analytics_data.get("hba1c", [])
+
+    latest_date = dates[-1] if len(dates) > 0 else "N/A"
+    latest_hr = heart_rates[-1] if len(heart_rates) > 0 and isinstance(heart_rates[-1], (int, float)) else "N/A"
+    latest_glucose = glucose_levels[-1] if len(glucose_levels) > 0 and isinstance(glucose_levels[-1], (int, float)) else "N/A"
+    latest_peak = peak_flow[-1] if len(peak_flow) > 0 and isinstance(peak_flow[-1], (int, float)) else "N/A"
+    latest_hba1c = hba1c[-1] if len(hba1c) > 0 and isinstance(hba1c[-1], (int, float)) else "N/A"
+
+    pdf.set_font("Arial", style="B", size=14)
+    pdf.cell(0, 10, "Latest Health Metrics", ln=True)
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, f"Date: {latest_date}", ln=True)
+    pdf.cell(0, 10, f"Heart Rate: {latest_hr} bpm", ln=True)
+    pdf.cell(0, 10, f"Blood Glucose: {latest_glucose} mg/dL", ln=True)
+    pdf.cell(0, 10, f"Peak Flow: {latest_peak} L/min", ln=True)
+    pdf.cell(0, 10, f"HbA1c: {latest_hba1c} %", ln=True)
+    pdf.ln(5)
+
+    # Add AI Summary (if available)
+    if ai_summary:
+        pdf.set_font("Arial", style="B", size=14)
+        pdf.cell(0, 10, "AI-Driven Health Summary", ln=True)
         pdf.set_font("Arial", size=12)
-        for line in ai_summary.split('\n'):
-            if line.strip():
-                pdf.multi_cell(0, 8, txt=line.strip())
-        pdf.ln(10)
+        pdf.multi_cell(0, 10, ai_summary)
+        pdf.ln(5)
 
-    # --------------------------
-    # Footer
-    # --------------------------
-    pdf.set_y(-30)
-    pdf.set_font("Arial", 'I', 10)
-    pdf.set_text_color(128, 128, 128)
-    pdf.cell(0, 10, txt="Generated by Health Analytics Dashboard © All rights reserved", align='C')
+    # Add Footer
+    pdf.set_font("Arial", size=10)
+    pdf.cell(0, 10, "This report is generated by HealthAI. For more details, consult your healthcare provider.", ln=True)
 
-    return pdf.output(dest='S').encode('latin-1')
-
-
+    # Return PDF as bytes
+    return pdf.output(dest="S").encode("latin-1")
 
 
 
