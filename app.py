@@ -1198,198 +1198,234 @@ elif page == "Reports":
             ai_summary = response
         except Exception as e:
             st.error(f"🚨 Error generating AI summary: {str(e)}")
-
-    # Step 5: Visualize Historical Data
+    # Step 5: Visualize Historical Data with Enhanced Features
     st.subheader("Step 5: Visualize Historical Data")
+    
+    # Ensure session state analytics data exists
+    if "analytics_data" not in st.session_state:
+        st.session_state.analytics_data = {
+            "dates": [datetime.now().strftime("%Y-%m-%d")],
+            "heart_rates": [72],
+            "glucose_levels": [90],
+            "blood_pressure_systolic": [120],
+            "blood_pressure_diastolic": [80],
+            "symptoms": ["Headache", "Fatigue", "Nausea"],
+            "symptom_frequency": [3, 2, 1],  # Example symptom frequencies
+        }
+    
+    # Ensure all lists in analytics_data are the same length
+    def pad_or_truncate_lists(data_dict):
+        """Ensure all lists in the dictionary are of the same length."""
+        max_length = max(len(lst) for lst in data_dict.values())
+        for key in data_dict:
+            current_length = len(data_dict[key])
+            if current_length < max_length:
+                data_dict[key].extend([None] * (max_length - current_length))
+            elif current_length > max_length:
+                data_dict[key] = data_dict[key][:max_length]
+        return data_dict
+    
+    # Apply padding/truncation to analytics_data
+    st.session_state.analytics_data = pad_or_truncate_lists(st.session_state.analytics_data)
+    
+    # Visualization Type Selection
     visualization_type = st.selectbox(
         "Select Metric to Visualize",
-        ["Heart Rate", "Blood Glucose", "Blood Pressure", "Peak Flow", "HbA1c"]
+        [
+            "Heart Rate Trend",
+            "Blood Pressure Dual-Line",
+            "Blood Glucose Trend with Reference Line",
+            "Symptom Frequency Pie Chart",
+        ]
     )
-
-    if visualization_type == "Heart Rate" and any(isinstance(x, (int, float)) for x in heart_rates):
+    
+    # Heart Rate Trend Line Chart
+    if visualization_type == "Heart Rate Trend":
+        heart_rates = st.session_state.analytics_data.get("heart_rates", [])
+        dates = st.session_state.analytics_data.get("dates", [])
         df_hr = pd.DataFrame({"Date": dates, "Heart Rate (bpm)": heart_rates})
-        fig = px.line(df_hr, x="Date", y="Heart Rate (bpm)", title="Heart Rate Over Time")
-        fig.update_layout(yaxis_title="Heart Rate (bpm)", xaxis_title="Date")
-        st.plotly_chart(fig, use_container_width=True)
-
-    elif visualization_type == "Blood Glucose" and any(isinstance(x, (int, float)) for x in glucose_levels):
-        df_gluc = pd.DataFrame({"Date": dates, "Blood Glucose (mg/dL)": glucose_levels})
-        fig = px.line(df_gluc, x="Date", y="Blood Glucose (mg/dL)", title="Blood Glucose Over Time")
-        fig.update_layout(yaxis_title="Blood Glucose (mg/dL)", xaxis_title="Date")
-        st.plotly_chart(fig, use_container_width=True)
-
-    elif visualization_type == "Blood Pressure" and any(isinstance(x, (int, float)) for x in st.session_state.analytics_data.get("blood_pressure_systolic", [])) and any(isinstance(x, (int, float)) for x in st.session_state.analytics_data.get("blood_pressure_diastolic", [])):
+    
+        fig_hr = px.line(
+            df_hr,
+            x="Date",
+            y="Heart Rate (bpm)",
+            title="Heart Rate Trend Over Time",
+            labels={"Heart Rate (bpm)": "Heart Rate (bpm)"},
+        )
+        fig_hr.update_traces(mode="lines+markers", hovertemplate="Date: %{x}<br>Heart Rate: %{y} bpm")
+        fig_hr.add_hline(
+            y=100,  # Example normal range upper limit
+            line_dash="dash",
+            line_color="red",
+            annotation_text="Normal Range Limit",
+            annotation_position="top right",
+        )
+        st.plotly_chart(fig_hr, use_container_width=True)
+    
+    # Blood Pressure Dual-Line Chart
+    elif visualization_type == "Blood Pressure Dual-Line":
         bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
         bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
-        df_bp = pd.DataFrame({
-            "Date": dates,
-            "Systolic BP (mmHg)": bp_systolic,
-            "Diastolic BP (mmHg)": bp_diastolic
-        })
-        fig = px.line(df_bp, x="Date", y=["Systolic BP (mmHg)", "Diastolic BP (mmHg)"], title="Blood Pressure Over Time")
-        fig.update_layout(yaxis_title="Pressure (mmHg)", xaxis_title="Date")
-        st.plotly_chart(fig, use_container_width=True)
-
-    elif visualization_type == "Peak Flow" and any(isinstance(x, (int, float)) for x in peak_flow):
-        df_pf = pd.DataFrame({"Date": dates, "Peak Flow (L/min)": peak_flow})
-        fig = px.line(df_pf, x="Date", y="Peak Flow (L/min)", title="Peak Flow Over Time")
-        fig.update_layout(yaxis_title="Peak Flow (L/min)", xaxis_title="Date")
-        st.plotly_chart(fig, use_container_width=True)
-
-    elif visualization_type == "HbA1c" and any(isinstance(x, (int, float)) for x in hba1c):
-        df_hba1c = pd.DataFrame({"Date": dates, "HbA1c (%)": hba1c})
-        fig = px.line(df_hba1c, x="Date", y="HbA1c (%)", title="HbA1c Over Time")
-        fig.update_layout(yaxis_title="HbA1c (%)", xaxis_title="Date")
-        st.plotly_chart(fig, use_container_width=True)
-
-    else:
-        st.info("ℹ️ No historical data available yet.")
-
-    # Step 6: Export Report
-    st.subheader("Step 6: Export Report")
-    if st.session_state.profile_complete:
-        # Export PDF
-        pdf_data = export_health_report(ai_summary=ai_summary)
-        st.download_button(
-            label="📄 Export Report as PDF",
-            data=pdf_data,
-            file_name="health_report.pdf",
-            mime="application/pdf"
+        dates = st.session_state.analytics_data.get("dates", [])
+        df_bp = pd.DataFrame(
+            {"Date": dates, "Systolic BP (mmHg)": bp_systolic, "Diastolic BP (mmHg)": bp_diastolic}
         )
-
-        # Export CSV
-        csv_data = ""
-        metrics_df = pd.DataFrame({
-            "Date": dates,
-            "Heart Rate (bpm)": heart_rates,
-            "Blood Glucose (mg/dL)": glucose_levels,
-            "Systolic BP (mmHg)": st.session_state.analytics_data.get("blood_pressure_systolic", []),
-            "Diastolic BP (mmHg)": st.session_state.analytics_data.get("blood_pressure_diastolic", []),
-            "Peak Flow (L/min)": peak_flow,
-            "HbA1c (%)": hba1c
-        })
-        csv_data = metrics_df.to_csv(index=False)
-
-        st.download_button(
-            label="💾 Export Metrics as CSV",
-            data=csv_data,
-            file_name="health_metrics.csv",
-            mime="text/csv"
-        )
-    else:
-        st.warning("⚠️ Complete your profile to enable report export.")
-
-    # Footer
-    lang = st.session_state.language
-    st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
-
-    # Debug Mode
-    with st.expander("🔧 Debug Mode"):
-        st.write("Session State:", st.session_state)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
-
-
-
-
-            
-elif page == "Settings":
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("### ⚙️ Settings")
     
-    # Section Header
-    st.markdown("""
-    <p style="font-size: 18px; color: #34495e;">
-        Manage your app preferences, reset data, and configure settings.
-    </p>
-    """, unsafe_allow_html=True)
-
-    # Step 1: Reset Profile and Data
-    st.subheader("Step 1: Reset Profile and Data")
-    st.info("⚠️ Resetting will clear all your saved data, including profile, logs, and analytics. This action cannot be undone.")
-    if st.button("🔄 Reset All Data"):
-        try:
-            reset_profile()
-            st.session_state.messages = []
-            st.session_state.glucose_log = []
-            st.session_state.bp_log = []
-            st.session_state.asthma_log = []
-            st.session_state.health_data = {}
-            st.session_state.analytics_data = {
-                "dates": [datetime.now().strftime("%Y-%m-%d")],
-                "heart_rates": [72],
-                "glucose_levels": [90],
-                "blood_pressure_systolic": [120],
-                "blood_pressure_diastolic": [80],
-                "peak_flow": [400],
-                "hba1c": [5.7]
-            }
-            st.success("✅ All data has been reset successfully!")
-        except Exception as e:
-            st.error(f"🚨 Error resetting data: {str(e)}")
-
-    # Step 2: Language Preferences
-    st.subheader("Step 2: Language Preferences")
-    lang_options = {
-       "English": "en",
-        "Español": "es",
-        "Français": "fr"
-    }
-    selected_lang = st.selectbox(
-        "Select App Language",
-        list(lang_options.keys()),
-        index=list(lang_options.values()).index(st.session_state.language)
+        fig_bp = px.line(
+            df_bp,
+            x="Date",
+            y=["Systolic BP (mmHg)", "Diastolic BP (mmHg)"],
+            title="Blood Pressure Trends Over Time",
+            labels={"value": "Pressure (mmHg)"},
+        )
+        fig_bp.update_traces(mode="lines+markers", hovertemplate="Date: %{x}<br>Pressure: %{y} mmHg")
+        fig_bp.add_hrect(
+            y0=120,
+            y1=140,
+            line_width=0,
+            fillcolor="red",
+            opacity=0.2,
+            annotation_text="Normal Systolic Range",
+        )
+        fig_bp.add_hrect(
+            y0=80,
+            y1=90,
+            line_width=0,
+            fillcolor="blue",
+            opacity=0.2,
+            annotation_text="Normal Diastolic Range",
+        )
+        st.plotly_chart(fig_bp, use_container_width=True)
+    
+    # Blood Glucose Trend Line Chart with Reference Line
+    elif visualization_type == "Blood Glucose Trend with Reference Line":
+        glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
+        dates = st.session_state.analytics_data.get("dates", [])
+        df_gluc = pd.DataFrame({"Date": dates, "Blood Glucose (mg/dL)": glucose_levels})
+    
+        fig_gluc = px.line(
+            df_gluc,
+            x="Date",
+            y="Blood Glucose (mg/dL)",
+            title="Blood Glucose Trend Over Time",
+            labels={"Blood Glucose (mg/dL)": "Blood Glucose (mg/dL)"},
+        )
+        fig_gluc.update_traces(mode="lines+markers", hovertemplate="Date: %{x}<br>Glucose: %{y} mg/dL")
+        fig_gluc.add_hline(
+            y=140,  # Example reference line for normal glucose level
+            line_dash="dash",
+            line_color="green",
+            annotation_text="Normal Glucose Limit",
+            annotation_position="top right",
+        )
+        st.plotly_chart(fig_gluc, use_container_width=True)
+    
+    # Symptom Frequency Pie Chart
+    elif visualization_type == "Symptom Frequency Pie Chart":
+        symptoms = st.session_state.analytics_data.get("symptoms", [])
+        symptom_frequency = st.session_state.analytics_data.get("symptom_frequency", [])
+        df_symptoms = pd.DataFrame({"Symptom": symptoms, "Frequency": symptom_frequency})
+    
+        fig_pie = px.pie(
+            df_symptoms,
+            names="Symptom",
+            values="Frequency",
+            title="Symptom Frequency Distribution",
+            hole=0.3,  # Donut chart style
+        )
+        fig_pie.update_traces(
+            textposition="inside",
+            textinfo="percent+label",
+            hovertemplate="Symptom: %{label}<br>Frequency: %{value}",
+        )
+        st.plotly_chart(fig_pie, use_container_width=True)
+    
+    # Metrics Summary Section
+    st.subheader("Metrics Summary")
+    
+    # Key Health Indicators with Trend Deltas
+    heart_rates = st.session_state.analytics_data.get("heart_rates", [])
+    glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
+    bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
+    bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
+    
+    hr_trend = (
+        "↑"
+        if len(heart_rates) > 1
+        and isinstance(heart_rates[-1], (int, float))
+        and isinstance(heart_rates[-2], (int, float))
+        and heart_rates[-1] > heart_rates[-2]
+        else "↓"
+        if len(heart_rates) > 1
+        and isinstance(heart_rates[-1], (int, float))
+        and isinstance(heart_rates[-2], (int, float))
+        else "-"
     )
-    if st.button("🌍 Update Language"):
-        st.session_state.language = lang_options[selected_lang]
-        st.success(f"✅ Language updated to {selected_lang}!")
+    glucose_trend = (
+        "↑"
+        if len(glucose_levels) > 1
+        and isinstance(glucose_levels[-1], (int, float))
+        and isinstance(glucose_levels[-2], (int, float))
+        and glucose_levels[-1] > glucose_levels[-2]
+        else "↓"
+        if len(glucose_levels) > 1
+        and isinstance(glucose_levels[-1], (int, float))
+        and isinstance(glucose_levels[-2], (int, float))
+        else "-"
+    )
+    bp_trend = (
+        "↑"
+        if len(bp_systolic) > 1
+        and isinstance(bp_systolic[-1], (int, float))
+        and isinstance(bp_systolic[-2], (int, float))
+        and bp_systolic[-1] > bp_systolic[-2]
+        else "↓"
+        if len(bp_systolic) > 1
+        and isinstance(bp_systolic[-1], (int, float))
+        and isinstance(bp_systolic[-2], (int, float))
+        else "-"
+    )
+    
+    # Color-Coded Metrics
+    def get_metric_status(value, low, high):
+        """Return color and status based on value range."""
+        if low <= value <= high:
+            return "✅ Normal", "green"
+        else:
+            return "⚠️ Abnormal", "red"
+    
+    hr_status, hr_color = get_metric_status(heart_rates[-1], 60, 100) if heart_rates else ("-", "gray")
+    glucose_status, glucose_color = get_metric_status(glucose_levels[-1], 70, 140) if glucose_levels else ("-", "gray")
+    bp_status, bp_color = get_metric_status(bp_systolic[-1], 90, 120) if bp_systolic else ("-", "gray")
+    
+    # Display Metrics Summary
+    st.markdown(
+        f"""
+        <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+            <div style="background-color: {hr_color}; padding: 10px; border-radius: 5px; text-align: center;">
+                <strong>Heart Rate</strong><br>
+                Value: {heart_rates[-1] if heart_rates else 'N/A'} bpm<br>
+                Trend: {hr_trend}<br>
+                Status: {hr_status}
+            </div>
+            <div style="background-color: {glucose_color}; padding: 10px; border-radius: 5px; text-align: center;">
+                <strong>Blood Glucose</strong><br>
+                Value: {glucose_levels[-1] if glucose_levels else 'N/A'} mg/dL<br>
+                Trend: {glucose_trend}<br>
+                Status: {glucose_status}
+            </div>
+            <div style="background-color: {bp_color}; padding: 10px; border-radius: 5px; text-align: center;">
+                <strong>Blood Pressure</strong><br>
+                Value: {bp_systolic[-1]}/{bp_diastolic[-1] if bp_diastolic else 'N/A'} mmHg<br>
+                Trend: {bp_trend}<br>
+                Status: {bp_status}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    # Step 3: Export/Import Data
-    st.subheader("Step 3: Export/Import Data")
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("#### Export Data")
-        if st.button("📤 Export Data as JSON"):
-            try:
-                export_data = {
-                    "profile_data": st.session_state.profile_data,
-                    "analytics_data": st.session_state.analytics_data,
-                    "messages": st.session_state.messages,
-                    "glucose_log": st.session_state.glucose_log,
-                    "bp_log": st.session_state.bp_log,
-                    "asthma_log": st.session_state.asthma_log,
-                    "health_data": st.session_state.health_data
-                }
-                json_data = json.dumps(export_data, indent=4)
-                st.download_button(
-                    label="💾 Download JSON File",
-                    data=json_data,
-                    file_name="health_data_export.json",
-                    mime="application/json"
-                )
-                st.success("✅ Data exported successfully!")
-            except Exception as e:
-                st.error(f"🚨 Error exporting data: {str(e)}")
-
-    with col2:
-        st.markdown("#### Import Data")
-        uploaded_file = st.file_uploader("Upload JSON File", type=["json"])
-        if uploaded_file is not None:
-            try:
-                imported_data = json.load(uploaded_file)
-                st.session_state.profile_data = imported_data.get("profile_data", {})
-                st.session_state.analytics_data = imported_data.get("analytics_data", {})
-                st.session_state.messages = imported_data.get("messages", [])
-                st.session_state.glucose_log = imported_data.get("glucose_log", [])
-                st.session_state.bp_log = imported_data.get("bp_log", [])
-                st.session_state.asthma_log = imported_data.get("asthma_log", [])
-                st.session_state.health_data = imported_data.get("health_data", {})
-                st.success("✅ Data imported successfully!")
-            except Exception as e:
-                st.error(f"🚨 Error importing data: {str(e)}")
+ 
 
 
 
