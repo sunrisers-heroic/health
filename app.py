@@ -1172,17 +1172,24 @@ elif page == "Reports":
 
         # Export as CSV
         csv_data = ""
-        if st.session_state.analytics_data:
-            metrics_df = pd.DataFrame({
-                "Date": dates,
-                "Heart Rate (bpm)": heart_rates,
-                "Blood Glucose (mg/dL)": glucose_levels,
-                "Systolic BP (mmHg)": bp_systolic,
-                "Diastolic BP (mmHg)": bp_diastolic,
-                "Peak Flow (L/min)": peak_flow,
-                "HbA1c (%)": hba1c
-            })
-            csv_data = metrics_df.to_csv(index=False)
+        dates = st.session_state.analytics_data.get("dates", [])
+        heart_rates = st.session_state.analytics_data.get("heart_rates", [])
+        glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
+        bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
+        bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
+        peak_flow = st.session_state.analytics_data.get("peak_flow", [])
+        hba1c = st.session_state.analytics_data.get("hba1c", [])
+
+        metrics_df = pd.DataFrame({
+            "Date": dates,
+            "Heart Rate (bpm)": heart_rates,
+            "Blood Glucose (mg/dL)": glucose_levels,
+            "Systolic BP (mmHg)": bp_systolic,
+            "Diastolic BP (mmHg)": bp_diastolic,
+            "Peak Flow (L/min)": peak_flow,
+            "HbA1c (%)": hba1c
+        })
+        csv_data = metrics_df.to_csv(index=False)
         
         st.download_button(
             label="💾 Export Metrics as CSV",
@@ -1196,6 +1203,14 @@ elif page == "Reports":
     st.write("View and edit logged metrics below:")
     
     # Display Metrics Table
+    dates = st.session_state.analytics_data.get("dates", [])
+    heart_rates = st.session_state.analytics_data.get("heart_rates", [])
+    glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
+    bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
+    bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
+    peak_flow = st.session_state.analytics_data.get("peak_flow", [])
+    hba1c = st.session_state.analytics_data.get("hba1c", [])
+
     metrics_df = pd.DataFrame({
         "Date": dates,
         "Heart Rate (bpm)": heart_rates,
