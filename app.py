@@ -790,8 +790,172 @@ elif page == "Treatment":
 elif page == "Diseases":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🫀 Chronic Disease Management")
-    # Existing chronic disease management logic here
+    
+    # Section Header
+    st.markdown("""
+    <p style="font-size: 18px; color: #34495e;">
+        Log and manage chronic conditions like diabetes, hypertension, and asthma.
+    </p>
+    """, unsafe_allow_html=True)
+    
+    # Step 1: Select Condition
+    st.subheader("Step 1: Select Your Condition")
+    condition = st.selectbox(
+        "Condition",
+        ["Diabetes", "Hypertension", "Asthma"],
+        help="Choose the condition you want to manage."
+    )
+    
+    # Step 2: Log Episode Details
+    st.subheader("Step 2: Log Episode Details")
+    if condition == "Diabetes":
+        glucose_level = st.number_input("Glucose Level (mg/dL)", min_value=50, max_value=400, step=1)
+        insulin_dose = st.number_input("Insulin Dose (units)", min_value=0, max_value=100, step=1)
+        episode_date = st.date_input("Date of Episode", value=datetime.today())
+        
+        if st.button("✅ Log Diabetes Episode"):
+            st.session_state.glucose_log.append({
+                "glucose_level": glucose_level,
+                "insulin_dose": insulin_dose,
+                "date": episode_date.strftime("%Y-%m-%d")
+            })
+            st.success(f"✅ Logged: Glucose {glucose_level} mg/dL, Insulin {insulin_dose} units on {episode_date.strftime('%Y-%m-%d')}")
+            
+            # Generate AI Health Advice
+            prompt = f"""
+            My glucose level is {glucose_level} mg/dL. I took {insulin_dose} units of insulin.
+            What does this mean? How should I adjust my insulin or diet?
+            Patient Profile: {json.dumps(st.session_state.profile_data)}
+            """
+            try:
+                llm = get_llm("diseases")
+                advice = llm.invoke(prompt).strip()
+                st.markdown(f"🧠 **AI Health Advice:** {advice}")
+            except Exception as e:
+                st.error(f"🚨 Error generating health advice: {str(e)}")
+
+    elif condition == "Hypertension":
+        systolic = st.number_input("Systolic BP", min_value=90, max_value=200, step=1)
+        diastolic = st.number_input("Diastolic BP", min_value=60, max_value=130, step=1)
+        episode_date = st.date_input("Date of Episode", value=datetime.today())
+        
+        if st.button("✅ Log Hypertension Episode"):
+            st.session_state.bp_log.append({
+                "systolic": systolic,
+                "diastolic": diastolic,
+                "date": episode_date.strftime("%Y-%m-%d")
+            })
+            st.success(f"✅ Logged: {systolic}/{diastolic} mmHg on {episode_date.strftime('%Y-%m-%d')}")
+            
+            # Generate AI Health Advice
+            prompt = f"""
+            My blood pressure is {systolic}/{diastolic} mmHg. What does that mean?
+            Patient Profile: {json.dumps(st.session_state.profile_data)}
+            """
+            try:
+                llm = get_llm("diseases")
+                advice = llm.invoke(prompt).strip()
+                st.markdown(f"🧠 **AI Health Advice:** {advice}")
+            except Exception as e:
+                st.error(f"🚨 Error generating health advice: {str(e)}")
+
+    elif condition == "Asthma":
+        triggers = st.text_area("Triggers Today (e.g., pollen, dust, exercise)")
+        severity = st.slider("Severity (1-10)", 1, 10, key="severity_slider")
+        peak_flow = st.number_input("Peak Flow (L/min)", min_value=100, max_value=800, step=1)
+        episode_date = st.date_input("Date of Episode", value=datetime.today())
+        
+        if st.button("✅ Log Asthma Episode"):
+            st.session_state.asthma_log.append({
+                "triggers": triggers,
+                "severity": severity,
+                "peak_flow": peak_flow,
+                "date": episode_date.strftime("%Y-%m-%d")
+            })
+            st.success(f"✅ Episode logged on {episode_date.strftime('%Y-%m-%d')}")
+            
+            # Generate AI Health Advice
+            prompt = f"""
+            What are some ways to avoid asthma triggers like '{triggers}'?
+            How can I manage severity level {severity} episodes?
+            Patient Profile: {json.dumps(st.session_state.profile_data)}
+            """
+            try:
+                llm = get_llm("diseases")
+                advice = llm.invoke(prompt).strip()
+                st.markdown(f"🧠 **AI Health Advice:** {advice}")
+            except Exception as e:
+                st.error(f"🚨 Error generating health advice: {str(e)}")
+
+    # Step 3: Historical Data Visualization
+    st.subheader("Step 3: Historical Data Visualization")
+    visualization_type = st.selectbox("Select Metric to Visualize", ["Glucose Levels", "Blood Pressure", "Peak Flow"])
+    
+    if visualization_type == "Glucose Levels" and st.session_state.glucose_log:
+        df_gluc = pd.DataFrame(st.session_state.glucose_log)
+        fig = px.line(df_gluc, x='date', y='glucose_level', title='Glucose Levels Over Time')
+        fig.update_layout(yaxis_title="Glucose (mg/dL)", xaxis_title="Date")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    elif visualization_type == "Blood Pressure" and st.session_state.bp_log:
+        df_bp = pd.DataFrame(st.session_state.bp_log)
+        fig = px.line(df_bp, x='date', y=['systolic', 'diastolic'], title='Blood Pressure Over Time')
+        fig.update_layout(yaxis_title="Pressure (mmHg)", xaxis_title="Date")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    elif visualization_type == "Peak Flow" and st.session_state.asthma_log:
+        df_asthma = pd.DataFrame(st.session_state.asthma_log)
+        fig = px.line(df_asthma, x='date', y='peak_flow', title='Peak Flow Over Time')
+        fig.update_layout(yaxis_title="Peak Flow (L/min)", xaxis_title="Date")
+        st.plotly_chart(fig, use_container_width=True)
+
+    # Step 4: Reset Logs
+    st.subheader("Step 4: Reset Logged Episodes")
+    if st.button("🔄 Reset All Logs", key="reset_logs"):
+        st.session_state.glucose_log = []
+        st.session_state.bp_log = []
+        st.session_state.asthma_log = []
+        st.success("All logs have been reset.")
+
+    # Export Logs Button
+    if st.session_state.glucose_log or st.session_state.bp_log or st.session_state.asthma_log:
+        logs_data = ""
+        if st.session_state.glucose_log:
+            logs_data += "Glucose Logs:\n" + "\n".join([
+                f"{log['date']}: {log['glucose_level']} mg/dL, Insulin {log['insulin_dose']} units"
+                for log in st.session_state.glucose_log
+            ]) + "\n\n"
+        if st.session_state.bp_log:
+            logs_data += "Blood Pressure Logs:\n" + "\n".join([
+                f"{log['date']}: {log['systolic']}/{log['diastolic']} mmHg"
+                for log in st.session_state.bp_log
+            ]) + "\n\n"
+        if st.session_state.asthma_log:
+            logs_data += "Asthma Logs:\n" + "\n".join([
+                f"{log['date']}: Triggers - {log['triggers']}, Severity - {log['severity']}, Peak Flow - {log['peak_flow']} L/min"
+                for log in st.session_state.asthma_log
+            ])
+        
+        st.download_button(
+            label="Export Logs",
+            data=logs_data,
+            file_name="disease_logs.txt",
+            mime="text/plain"
+        )
+
     st.markdown('</div>', unsafe_allow_html=True)
+
+
+
+
+
+
+
+
+
+
+
+
 
 elif page == "Reports":
     st.markdown('<div class="card">', unsafe_allow_html=True)
