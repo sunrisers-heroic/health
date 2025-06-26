@@ -89,28 +89,38 @@ tr:hover {background-color: #f9f9f9;}
 """, unsafe_allow_html=True)
 
 # Sidebar Navigation
+# Navigation Sidebar
 st.sidebar.title("Navigation")
-page = st.sidebar.selectbox("Go to", ["Profile", "Chat", "Symptoms", "Treatment", "Diseases", "Reports", "Settings"])
+page = st.sidebar.selectbox(
+    "Go to",
+    ["Profile", "Chat", "Symptoms", "Treatment", "Diseases", "Reports", "Settings"]
+)
 
-# Initialize session state variables
-if "profile_complete" not in st.session_state:
-    st.session_state.profile_complete = False
-if "profile_data" not in st.session_state:
-    st.session_state.profile_data = {}
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "health_data" not in st.session_state:
-    st.session_state.health_data = {}
-if "language" not in st.session_state:
-    st.session_state.language = "en"
-if "glucose_log" not in st.session_state:
-    st.session_state.glucose_log = []
-if "bp_log" not in st.session_state:
-    st.session_state.bp_log = []
-if "asthma_log" not in st.session_state:
-    st.session_state.asthma_log = []
-if "analytics_data" not in st.session_state:
-    st.session_state.analytics_data = {"heart_rates": [72], "glucose_levels": [90], "dates": [datetime.now().strftime("%Y-%m-%d")]}
+# Initialize Session State Variables
+DEFAULT_SESSION_STATE = {
+    "profile_complete": False,
+    "profile_data": {},
+    "messages": [],
+    "health_data": {},
+    "language": "en",
+    "glucose_log": [],
+    "bp_log": [],
+    "asthma_log": [],
+    "analytics_data": {
+        "dates": [datetime.now().strftime("%Y-%m-%d")],
+        "heart_rates": [72],
+        "glucose_levels": [90],
+        "blood_pressure_systolic": [120],
+        "blood_pressure_diastolic": [80],
+        "peak_flow": [400],
+        "hba1c": [5.7]
+    }
+}
+
+# Ensure all default keys exist in session state
+for key, default_value in DEFAULT_SESSION_STATE.items():
+    if key not in st.session_state:
+        st.session_state[key] = default_value
 
 # Reset Profile Function
 def reset_profile():
