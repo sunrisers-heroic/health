@@ -1381,22 +1381,7 @@ elif page == "Settings":
             except Exception as e:
                 st.error(f"🚨 Error importing data: {str(e)}")
 
-    # Step 4: App Theme Customization
-    st.subheader("Step 4: App Theme Customization")
-    theme_options = {
-        "Default": "default",
-        "Dark Mode": "dark",
-        "Light Mode": "light"
-    }
-    selected_theme = st.selectbox(
-        "Select App Theme",
-        list(theme_options.keys()),
-        index=list(theme_options.values()).index(st.session_state.theme)
-    )
-    if st.button("🎨 Update Theme"):
-        st.session_state.theme = theme_options[selected_theme]
-        st.success(f"✅ Theme updated to {selected_theme}!")
-        st.experimental_rerun()
+
 
     # Footer
     lang = st.session_state.language
