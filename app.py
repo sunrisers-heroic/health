@@ -1198,55 +1198,6 @@ elif page == "Reports":
             mime="text/csv"
         )
 
-    # Step 5: Manage Logs
-    st.subheader("Step 5: Manage Logged Metrics")
-    st.write("View and edit logged metrics below:")
-    
-    # Display Metrics Table
-    dates = st.session_state.analytics_data.get("dates", [])
-    heart_rates = st.session_state.analytics_data.get("heart_rates", [])
-    glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
-    bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
-    bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
-    peak_flow = st.session_state.analytics_data.get("peak_flow", [])
-    hba1c = st.session_state.analytics_data.get("hba1c", [])
-
-    metrics_df = pd.DataFrame({
-        "Date": dates,
-        "Heart Rate (bpm)": heart_rates,
-        "Blood Glucose (mg/dL)": glucose_levels,
-        "Systolic BP (mmHg)": bp_systolic,
-        "Diastolic BP (mmHg)": bp_diastolic,
-        "Peak Flow (L/min)": peak_flow,
-        "HbA1c (%)": hba1c
-    })
-    edited_metrics = st.data_editor(metrics_df, num_rows="dynamic")
-    
-    if st.button("💾 Save Changes"):
-        st.session_state.analytics_data["dates"] = edited_metrics["Date"].tolist()
-        st.session_state.analytics_data["heart_rates"] = edited_metrics["Heart Rate (bpm)"].tolist()
-        st.session_state.analytics_data["glucose_levels"] = edited_metrics["Blood Glucose (mg/dL)"].tolist()
-        st.session_state.analytics_data["blood_pressure_systolic"] = edited_metrics["Systolic BP (mmHg)"].tolist()
-        st.session_state.analytics_data["blood_pressure_diastolic"] = edited_metrics["Diastolic BP (mmHg)"].tolist()
-        st.session_state.analytics_data["peak_flow"] = edited_metrics["Peak Flow (L/min)"].tolist()
-        st.session_state.analytics_data["hba1c"] = edited_metrics["HbA1c (%)"].tolist()
-        st.success("Changes saved successfully!")
-    
-    # Reset Logs Button
-    if st.button("🔄 Reset All Logs"):
-        st.session_state.analytics_data = {
-            "dates": [datetime.now().strftime("%Y-%m-%d")],
-            "heart_rates": [72],
-            "glucose_levels": [90],
-            "blood_pressure_systolic": [120],
-            "blood_pressure_diastolic": [80],
-            "peak_flow": [400],
-            "hba1c": [5.7]
-        }
-        st.success("All logs have been reset.")
-    
-    # Footer
-    lang = st.session_state.language
     st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
     
     # Debug Mode
