@@ -965,7 +965,7 @@ elif page == "Reports":
         Analyze your health metrics, generate detailed reports, and visualize trends.
     </p>
     """, unsafe_allow_html=True)
-    
+
     # Initialize session state analytics data if not exists
     if "analytics_data" not in st.session_state:
         st.session_state.analytics_data = {
@@ -977,7 +977,7 @@ elif page == "Reports":
             "peak_flow": [400],
             "hba1c": [5.7]
         }
-    
+
     # Ensure all lists in analytics_data are the same length
     def pad_or_truncate_lists(data_dict):
         """Ensure all lists in the dictionary are of the same length."""
@@ -991,14 +991,14 @@ elif page == "Reports":
                 # Truncate if the list is longer
                 data_dict[key] = data_dict[key][:max_length]
         return data_dict
-    
+
     # Apply padding/truncation to analytics_data
     st.session_state.analytics_data = pad_or_truncate_lists(st.session_state.analytics_data)
-    
+
     # Step 1: Log New Metrics
     st.subheader("Step 1: Log New Health Metrics")
     col1, col2 = st.columns(2)
-    
+
     with col1:
         metric_type = st.selectbox(
             "Select Metric Type",
@@ -1015,7 +1015,7 @@ elif page == "Reports":
             value = st.number_input("Peak Flow (L/min)", min_value=100, max_value=800, step=1)
         elif metric_type == "HbA1c":
             value = st.number_input("HbA1c (%)", min_value=4.0, max_value=12.0, step=0.1)
-    
+
     with col2:
         log_date = st.date_input("Log Date", value=datetime.today())
         if st.button("✅ Log Metric"):
@@ -1041,8 +1041,30 @@ elif page == "Reports":
                 st.session_state.analytics_data["dates"].append(log_date.strftime("%Y-%m-%d"))
                 st.success(f"Logged HbA1c: {value}% on {log_date.strftime('%Y-%m-%d')}")
 
-    # Step 2: Generate AI-Driven Health Summary
-    st.subheader("Step 2: Generate AI-Driven Health Summary")
+    # Step 2: Trend Analysis
+    st.subheader("### 📈 Trend Analysis")
+    dates = st.session_state.analytics_data.get("dates", [])
+    heart_rates = st.session_state.analytics_data.get("heart_rates", [])
+    glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
+    peak_flow = st.session_state.analytics_data.get("peak_flow", [])
+    hba1c = st.session_state.analytics_data.get("hba1c", [])
+
+    hr_trend = "↑" if len(heart_rates) > 1 and heart_rates[-1] > heart_rates[-2] else "↓" if len(heart_rates) > 1 else "-"
+    glucose_trend = "↑" if len(glucose_levels) > 1 and glucose_levels[-1] > glucose_levels[-2] else "↓" if len(glucose_levels) > 1 else "-"
+    peak_trend = "↑" if len(peak_flow) > 1 and peak_flow[-1] > peak_flow[-2] else "↓" if len(peak_flow) > 1 else "-"
+    hba1c_trend = "↑" if len(hba1c) > 1 and hba1c[-1] > hba1c[-2] else "↓" if len(hba1c) > 1 else "-"
+
+    st.markdown(f"""
+    <div class="metric-card">
+        <p><b>Heart Rate:</b> {hr_trend}</p>
+        <p><b>Blood Glucose:</b> {glucose_trend}</p>
+        <p><b>Peak Flow:</b> {peak_trend}</p>
+        <p><b>HbA1c:</b> {hba1c_trend}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Step 3: Generate AI-Driven Health Summary
+    st.subheader("Step 3: Generate AI-Driven Health Summary")
     if st.button("🧠 Generate AI Report Summary"):
         try:
             profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
@@ -1100,40 +1122,32 @@ elif page == "Reports":
                 response = llm.invoke(prompt).strip()
             if not response or "error" in response.lower():
                 response = "I'm unable to generate a health summary at this time due to technical issues. Please try again later."
-            
+
             st.markdown("### 🧠 AI Health Analysis")
             st.markdown(response)
             ai_summary = response
         except Exception as e:
             st.error(f"🚨 Error generating AI summary: {str(e)}")
-    
-    # Step 3: Visualize Historical Data
-    st.subheader("Step 3: Visualize Historical Data")
+
+    # Step 4: Visualize Historical Data
+    st.subheader("Step 4: Visualize Historical Data")
     visualization_type = st.selectbox(
         "Select Metric to Visualize",
         ["Heart Rate", "Blood Glucose", "Blood Pressure", "Peak Flow", "HbA1c"]
     )
-    
-    dates = st.session_state.analytics_data.get("dates", [])
-    heart_rates = st.session_state.analytics_data.get("heart_rates", [])
-    glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
-    bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
-    bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
-    peak_flow = st.session_state.analytics_data.get("peak_flow", [])
-    hba1c = st.session_state.analytics_data.get("hba1c", [])
-    
+
     if visualization_type == "Heart Rate" and heart_rates:
         df_hr = pd.DataFrame({"Date": dates, "Heart Rate (bpm)": heart_rates})
         fig = px.line(df_hr, x="Date", y="Heart Rate (bpm)", title="Heart Rate Over Time")
         fig.update_layout(yaxis_title="Heart Rate (bpm)", xaxis_title="Date")
         st.plotly_chart(fig, use_container_width=True)
-    
+
     elif visualization_type == "Blood Glucose" and glucose_levels:
         df_gluc = pd.DataFrame({"Date": dates, "Blood Glucose (mg/dL)": glucose_levels})
         fig = px.line(df_gluc, x="Date", y="Blood Glucose (mg/dL)", title="Blood Glucose Over Time")
         fig.update_layout(yaxis_title="Blood Glucose (mg/dL)", xaxis_title="Date")
         st.plotly_chart(fig, use_container_width=True)
-    
+
     elif visualization_type == "Blood Pressure" and bp_systolic and bp_diastolic:
         df_bp = pd.DataFrame({
             "Date": dates,
@@ -1143,24 +1157,24 @@ elif page == "Reports":
         fig = px.line(df_bp, x="Date", y=["Systolic BP (mmHg)", "Diastolic BP (mmHg)"], title="Blood Pressure Over Time")
         fig.update_layout(yaxis_title="Pressure (mmHg)", xaxis_title="Date")
         st.plotly_chart(fig, use_container_width=True)
-    
+
     elif visualization_type == "Peak Flow" and peak_flow:
         df_pf = pd.DataFrame({"Date": dates, "Peak Flow (L/min)": peak_flow})
         fig = px.line(df_pf, x="Date", y="Peak Flow (L/min)", title="Peak Flow Over Time")
         fig.update_layout(yaxis_title="Peak Flow (L/min)", xaxis_title="Date")
         st.plotly_chart(fig, use_container_width=True)
-    
+
     elif visualization_type == "HbA1c" and hba1c:
         df_hba1c = pd.DataFrame({"Date": dates, "HbA1c (%)": hba1c})
         fig = px.line(df_hba1c, x="Date", y="HbA1c (%)", title="HbA1c Over Time")
         fig.update_layout(yaxis_title="HbA1c (%)", xaxis_title="Date")
         st.plotly_chart(fig, use_container_width=True)
-    
+
     else:
         st.info("ℹ️ No historical data available yet.")
 
-    # Step 4: Export PDF Report
-    st.subheader("Step 4: Export Report")
+    # Step 5: Export PDF Report
+    st.subheader("Step 5: Export Report")
     if st.session_state.profile_complete:
         pdf_data = export_health_report(ai_summary=ai_summary)
         st.download_button(
@@ -1172,14 +1186,6 @@ elif page == "Reports":
 
         # Export as CSV
         csv_data = ""
-        dates = st.session_state.analytics_data.get("dates", [])
-        heart_rates = st.session_state.analytics_data.get("heart_rates", [])
-        glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
-        bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
-        bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
-        peak_flow = st.session_state.analytics_data.get("peak_flow", [])
-        hba1c = st.session_state.analytics_data.get("hba1c", [])
-
         metrics_df = pd.DataFrame({
             "Date": dates,
             "Heart Rate (bpm)": heart_rates,
@@ -1190,7 +1196,7 @@ elif page == "Reports":
             "HbA1c (%)": hba1c
         })
         csv_data = metrics_df.to_csv(index=False)
-        
+
         st.download_button(
             label="💾 Export Metrics as CSV",
             data=csv_data,
@@ -1200,8 +1206,8 @@ elif page == "Reports":
 
     # Footer
     lang = st.session_state.language
-    st.markdown(f'Hello', unsafe_allow_html=True)
-    
+    st.markdown(f'<p style="text-align:center; font-size:14px;">{LANGUAGES[lang]["footer"]}</p>', unsafe_allow_html=True)
+
     # Debug Mode
     with st.expander("🔧 Debug Mode"):
         st.write("Session State:", st.session_state)
