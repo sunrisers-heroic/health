@@ -1041,114 +1041,117 @@ elif page == "Reports":
                 st.session_state.analytics_data["dates"].append(log_date.strftime("%Y-%m-%d"))
                 st.success(f"Logged HbA1c: {value}% on {log_date.strftime('%Y-%m-%d')}")
 
-    # Step 2: Trend Analysis
-    st.subheader("### 📈 Trend Analysis")
+    # Step 2: Display Latest Metrics
+    st.subheader("### 📋 Latest Metrics")
     dates = st.session_state.analytics_data.get("dates", [])
     heart_rates = st.session_state.analytics_data.get("heart_rates", [])
     glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
     peak_flow = st.session_state.analytics_data.get("peak_flow", [])
     hba1c = st.session_state.analytics_data.get("hba1c", [])
 
-    hr_trend = "↑" if len(heart_rates) > 1 and heart_rates[-1] > heart_rates[-2] else "↓" if len(heart_rates) > 1 else "-"
-    glucose_trend = "↑" if len(glucose_levels) > 1 and glucose_levels[-1] > glucose_levels[-2] else "↓" if len(glucose_levels) > 1 else "-"
-    peak_trend = "↑" if len(peak_flow) > 1 and peak_flow[-1] > peak_flow[-2] else "↓" if len(peak_flow) > 1 else "-"
-    hba1c_trend = "↑" if len(hba1c) > 1 and hba1c[-1] > hba1c[-2] else "↓" if len(hba1c) > 1 else "-"
+    latest_date = dates[-1] if len(dates) > 0 else "N/A"
+    latest_hr = heart_rates[-1] if len(heart_rates) > 0 and isinstance(heart_rates[-1], (int, float)) else "N/A"
+    latest_glucose = glucose_levels[-1] if len(glucose_levels) > 0 and isinstance(glucose_levels[-1], (int, float)) else "N/A"
+    latest_peak = peak_flow[-1] if len(peak_flow) > 0 and isinstance(peak_flow[-1], (int, float)) else "N/A"
+    latest_hba1c = hba1c[-1] if len(hba1c) > 0 and isinstance(hba1c[-1], (int, float)) else "N/A"
 
     st.markdown(f"""
     <div class="metric-card">
-        <p><b>Heart Rate:</b> {hr_trend}</p>
-        <p><b>Blood Glucose:</b> {glucose_trend}</p>
-        <p><b>Peak Flow:</b> {peak_trend}</p>
-        <p><b>HbA1c:</b> {hba1c_trend}</p>
+        <strong>Date:</strong> {latest_date}<br>
+        <strong>Heart Rate:</strong> {latest_hr} bpm<br>
+        <strong>Blood Glucose:</strong> {latest_glucose} mg/dL<br>
+        <strong>Peak Flow:</strong> {latest_peak} L/min<br>
+        <strong>HbA1c:</strong> {latest_hba1c} %
     </div>
     """, unsafe_allow_html=True)
 
-    # Step 3: Generate AI-Driven Health Summary
-    st.subheader("Step 3: Generate AI-Driven Health Summary")
+    # Step 3: Trend Analysis
+    st.subheader("### 📈 Trend Analysis")
+    hr_trend = "↑" if len(heart_rates) > 1 and isinstance(heart_rates[-1], (int, float)) and isinstance(heart_rates[-2], (int, float)) and heart_rates[-1] > heart_rates[-2] else "↓" if len(heart_rates) > 1 and isinstance(heart_rates[-1], (int, float)) and isinstance(heart_rates[-2], (int, float)) else "-"
+    glucose_trend = "↑" if len(glucose_levels) > 1 and isinstance(glucose_levels[-1], (int, float)) and isinstance(glucose_levels[-2], (int, float)) and glucose_levels[-1] > glucose_levels[-2] else "↓" if len(glucose_levels) > 1 and isinstance(glucose_levels[-1], (int, float)) and isinstance(glucose_levels[-2], (int, float)) else "-"
+    peak_trend = "↑" if len(peak_flow) > 1 and isinstance(peak_flow[-1], (int, float)) and isinstance(peak_flow[-2], (int, float)) and peak_flow[-1] > peak_flow[-2] else "↓" if len(peak_flow) > 1 and isinstance(peak_flow[-1], (int, float)) and isinstance(peak_flow[-2], (int, float)) else "-"
+    hba1c_trend = "↑" if len(hba1c) > 1 and isinstance(hba1c[-1], (int, float)) and isinstance(hba1c[-2], (int, float)) and hba1c[-1] > hba1c[-2] else "↓" if len(hba1c) > 1 and isinstance(hba1c[-1], (int, float)) and isinstance(hba1c[-2], (int, float)) else "-"
+
+    st.markdown(f"""
+    <div class="metric-card">
+        <strong>Heart Rate Trend:</strong> {hr_trend}<br>
+        <strong>Glucose Trend:</strong> {glucose_trend}<br>
+        <strong>Peak Flow Trend:</strong> {peak_trend}<br>
+        <strong>HbA1c Trend:</strong> {hba1c_trend}
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Step 4: Generate AI-Driven Health Summary
+    st.subheader("Step 4: Generate AI-Driven Health Summary")
     if st.button("🧠 Generate AI Report Summary"):
         try:
             profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
-            dates = st.session_state.analytics_data.get("dates", [])
-            heart_rates = st.session_state.analytics_data.get("heart_rates", [])
-            glucose_levels = st.session_state.analytics_data.get("glucose_levels", [])
-            bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
-            bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
-            peak_flow = st.session_state.analytics_data.get("peak_flow", [])
-            hba1c = st.session_state.analytics_data.get("hba1c", [])
+            recent_hr = ', '.join(map(str, [x for x in heart_rates[-7:] if isinstance(x, (int, float))]))
+            recent_glucose = ', '.join(map(str, [x for x in glucose_levels[-7:] if isinstance(x, (int, float))]))
+            recent_peak = ', '.join(map(str, [x for x in peak_flow[-7:] if isinstance(x, (int, float))]))
+            recent_hba1c = ', '.join(map(str, [x for x in hba1c[-7:] if isinstance(x, (int, float))]))
 
             prompt = f"""
             You are a professional healthcare AI assistant tasked with providing a personalized health summary.
-            Use the following guidelines:
-            - Be empathetic, informative, and clear.
-            - Always mention that you're not a substitute for real medical advice.
-            - If unsure, recommend consulting a physician.
-
             Patient Profile: {profile_info}
-            Latest Metrics:
-            - Date: {dates[-1] if len(dates) > 0 else 'N/A'}
-            - Heart Rate: {heart_rates[-1] if len(heart_rates) > 0 else 'N/A'} bpm
-            - Blood Glucose: {glucose_levels[-1] if len(glucose_levels) > 0 else 'N/A'} mg/dL
-            - Blood Pressure: {bp_systolic[-1]}/{bp_diastolic[-1]} mmHg
-            - Peak Flow: {peak_flow[-1] if len(peak_flow) > 0 else 'N/A'} L/min
-            - HbA1c: {hba1c[-1] if len(hba1c) > 0 else 'N/A'} %
-
-            Provide a detailed analysis including:
-            1. Trends in metrics over time.
-            2. Potential health implications.
-            3. Recommendations for improvement.
-            4. Warnings or reminders about consulting a doctor.
-
+            Recent Metrics:
+            - Heart Rate (bpm): [{recent_hr}]
+            - Blood Glucose (mg/dL): [{recent_glucose}]
+            - Peak Flow (L/min): [{recent_peak}]
+            - HbA1c (%): [{recent_hba1c}]
+            Instructions:
+            1. Analyze trends over time and note if values are increasing, decreasing, or stable.
+            2. Interpret what these trends may mean in terms of health implications.
+            3. Provide simple, easy-to-understand explanations without medical jargon.
+            4. Suggest practical lifestyle changes (e.g., diet, exercise).
+            5. Mention when a medical checkup is recommended.
             Output format:
             ### 🔍 Trend Overview
             - Heart Rate: [Stable/Increasing/Decreasing]
             - Blood Glucose: [Stable/Increasing/Decreasing]
-            - Blood Pressure: [Stable/Increasing/Decreasing]
             - Peak Flow: [Stable/Increasing/Decreasing]
             - HbA1c: [Stable/Increasing/Decreasing]
-
             ### 🩺 Health Implications
             Explain what the trend might indicate about the patient's current condition.
-
             ### 💡 Recommendations
             Provide 2-3 lifestyle suggestions tailored to the patient's data.
-
             ### ⚠️ Important Notes
             Include any warnings or reminders about consulting a doctor.
-
-            Remember: Keep everything conversational and easy to understand.
             """
             llm = get_llm("reports")
             with st.spinner("🧠 Generating AI-driven health summary..."):
                 response = llm.invoke(prompt).strip()
             if not response or "error" in response.lower():
                 response = "I'm unable to generate a health summary at this time due to technical issues. Please try again later."
-
+            
             st.markdown("### 🧠 AI Health Analysis")
             st.markdown(response)
             ai_summary = response
         except Exception as e:
             st.error(f"🚨 Error generating AI summary: {str(e)}")
 
-    # Step 4: Visualize Historical Data
-    st.subheader("Step 4: Visualize Historical Data")
+    # Step 5: Visualize Historical Data
+    st.subheader("Step 5: Visualize Historical Data")
     visualization_type = st.selectbox(
         "Select Metric to Visualize",
         ["Heart Rate", "Blood Glucose", "Blood Pressure", "Peak Flow", "HbA1c"]
     )
 
-    if visualization_type == "Heart Rate" and heart_rates:
+    if visualization_type == "Heart Rate" and any(isinstance(x, (int, float)) for x in heart_rates):
         df_hr = pd.DataFrame({"Date": dates, "Heart Rate (bpm)": heart_rates})
         fig = px.line(df_hr, x="Date", y="Heart Rate (bpm)", title="Heart Rate Over Time")
         fig.update_layout(yaxis_title="Heart Rate (bpm)", xaxis_title="Date")
         st.plotly_chart(fig, use_container_width=True)
 
-    elif visualization_type == "Blood Glucose" and glucose_levels:
+    elif visualization_type == "Blood Glucose" and any(isinstance(x, (int, float)) for x in glucose_levels):
         df_gluc = pd.DataFrame({"Date": dates, "Blood Glucose (mg/dL)": glucose_levels})
         fig = px.line(df_gluc, x="Date", y="Blood Glucose (mg/dL)", title="Blood Glucose Over Time")
         fig.update_layout(yaxis_title="Blood Glucose (mg/dL)", xaxis_title="Date")
         st.plotly_chart(fig, use_container_width=True)
 
-    elif visualization_type == "Blood Pressure" and bp_systolic and bp_diastolic:
+    elif visualization_type == "Blood Pressure" and any(isinstance(x, (int, float)) for x in st.session_state.analytics_data.get("blood_pressure_systolic", [])) and any(isinstance(x, (int, float)) for x in st.session_state.analytics_data.get("blood_pressure_diastolic", [])):
+        bp_systolic = st.session_state.analytics_data.get("blood_pressure_systolic", [])
+        bp_diastolic = st.session_state.analytics_data.get("blood_pressure_diastolic", [])
         df_bp = pd.DataFrame({
             "Date": dates,
             "Systolic BP (mmHg)": bp_systolic,
@@ -1158,13 +1161,13 @@ elif page == "Reports":
         fig.update_layout(yaxis_title="Pressure (mmHg)", xaxis_title="Date")
         st.plotly_chart(fig, use_container_width=True)
 
-    elif visualization_type == "Peak Flow" and peak_flow:
+    elif visualization_type == "Peak Flow" and any(isinstance(x, (int, float)) for x in peak_flow):
         df_pf = pd.DataFrame({"Date": dates, "Peak Flow (L/min)": peak_flow})
         fig = px.line(df_pf, x="Date", y="Peak Flow (L/min)", title="Peak Flow Over Time")
         fig.update_layout(yaxis_title="Peak Flow (L/min)", xaxis_title="Date")
         st.plotly_chart(fig, use_container_width=True)
 
-    elif visualization_type == "HbA1c" and hba1c:
+    elif visualization_type == "HbA1c" and any(isinstance(x, (int, float)) for x in hba1c):
         df_hba1c = pd.DataFrame({"Date": dates, "HbA1c (%)": hba1c})
         fig = px.line(df_hba1c, x="Date", y="HbA1c (%)", title="HbA1c Over Time")
         fig.update_layout(yaxis_title="HbA1c (%)", xaxis_title="Date")
@@ -1173,8 +1176,8 @@ elif page == "Reports":
     else:
         st.info("ℹ️ No historical data available yet.")
 
-    # Step 5: Export PDF Report
-    st.subheader("Step 5: Export Report")
+    # Step 6: Export PDF Report
+    st.subheader("Step 6: Export Report")
     if st.session_state.profile_complete:
         pdf_data = export_health_report(ai_summary=ai_summary)
         st.download_button(
@@ -1190,8 +1193,8 @@ elif page == "Reports":
             "Date": dates,
             "Heart Rate (bpm)": heart_rates,
             "Blood Glucose (mg/dL)": glucose_levels,
-            "Systolic BP (mmHg)": bp_systolic,
-            "Diastolic BP (mmHg)": bp_diastolic,
+            "Systolic BP (mmHg)": st.session_state.analytics_data.get("blood_pressure_systolic", []),
+            "Diastolic BP (mmHg)": st.session_state.analytics_data.get("blood_pressure_diastolic", []),
             "Peak Flow (L/min)": peak_flow,
             "HbA1c (%)": hba1c
         })
@@ -1213,7 +1216,6 @@ elif page == "Reports":
         st.write("Session State:", st.session_state)
 
     st.markdown('</div>', unsafe_allow_html=True)
-
 
 
 
