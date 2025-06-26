@@ -513,7 +513,7 @@ elif page == "Chat":
                     
                     Answer:
                     """
-                                    with st.spinner("🧠 Generating response..."):
+                with st.spinner("🧠 Generating response..."):
                     response = llm.invoke(prompt).strip()
                 if not response or "error" in response.lower():
                     response = "I'm unable to respond at this time due to technical issues. Please try again later."
