@@ -147,15 +147,16 @@ try:
         "apikey": st.secrets["WATSONX_APIKEY"]
     }
     project_id = st.secrets["WATSONX_PROJECT_ID"]
-    
+
+    # Update deprecated model ID to the new one
     model_map = {
-        "chat": "ibm/granite-13b-instruct-v2",
-        "symptoms": "ibm/granite-13b-instruct-v2",
-        "treatment": "ibm/granite-13b-instruct-v2",
-        "diseases": "ibm/granite-13b-instruct-v2",
-        "reports": "ibm/granite-13b-instruct-v2"
+        "chat": "ibm/granite-3-3-8b-instruct",
+        "symptoms": "ibm/granite-3-3-8b-instruct",
+        "treatment": "ibm/granite-3-3-8b-instruct",
+        "diseases": "ibm/granite-3-3-8b-instruct",
+        "reports": "ibm/granite-3-3-8b-instruct"
     }
-    
+
     def get_llm(model_name):
         return WatsonxLLM(
             model_id=model_map[model_name],
@@ -164,7 +165,7 @@ try:
             project_id=project_id,
             params={
                 GenParams.DECODING_METHOD: "greedy",
-                GenParams.TEMPERATURE: 0.7,
+                GenParams.TEMPERATURE: 1.2,
                 GenParams.MIN_NEW_TOKENS: 5,
                 GenParams.MAX_NEW_TOKENS: 300,
                 GenParams.STOP_SEQUENCES: ["Human:", "Observation"],
@@ -176,7 +177,6 @@ except KeyError:
 except Exception as e:
     st.error(f"🚨 Error initializing LLM: {str(e)}")
     st.stop()
-
 LANGUAGES = {
     "en": {
         "title": "🩺 Health Assistant",
