@@ -60,4 +60,30 @@ Built using **Streamlit**, **Python**, and powered by **IBM Cloud services**, He
 
 1. Clone the repo:
    ```bash
-   git clone https://github.com/your-username/healthai.git 
+   git clone https://github.com/your-username/healthai.git
+
+📁 Documentation
+For detailed documentation, including requirement analysis, design, and testing reports, refer to the docs/ folder in the repository.
+
+🤝 Contributing
+We welcome contributions! Please read our contributing guide before submitting pull requests.
+
+📧 Contact
+Team Leader : Guttula Niranjan
+Team ID : LTVIP2025TMID31708
+Date : June 26, 2025
+📜 License
+This project is licensed under the MIT License – see the LICENSE file for details.
+
+
+---
+
+### ✅ Instructions
+
+- Paste this content into your **GitHub README.md** or a **Markdown cell in Jupyter Notebook**.
+- Replace placeholder links like `[your-username]` and add badges if needed.
+- If you're deploying on **Streamlit Community Cloud**, include deployment instructions too!
+
+Let me know if you'd like a downloadable `.md` version or want to add badges like:
+- ![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg )
+- ![License](https://img.shields.io/github/license/yourname/repo )
