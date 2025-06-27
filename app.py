@@ -374,17 +374,17 @@ elif page == "Chat":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 🗨️ Chat Interface")
     
-    # Section Header
     st.markdown("""
     <p style="font-size: 18px; color: #34495e;">
         Interact with our AI-powered health assistant for personalized advice and answers to your health queries.
     </p>
     """, unsafe_allow_html=True)
-    
-    # Display Chat History
+
+    # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
-    
+
+    # Display chat messages
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
     for role, message in st.session_state.messages:
         if role == "user":
@@ -392,87 +392,70 @@ elif page == "Chat":
         elif role == "assistant":
             st.markdown(f'<div class="bot-bubble"><strong>Assistant:</strong><br>{message}</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-    
-    # User Input
+
+    # Input area
     st.markdown('<div class="input-container">', unsafe_allow_html=True)
-    user_input = st.text_input("Ask your question here:", placeholder="Type your query...", key="user_input")
+    user_input = st.text_input("Ask your question here:", placeholder="Type your query...", key="chat_input")
     col1, col2 = st.columns([1, 6])
-    
+
     with col1:
         send_button = st.button("Send", key="send_message")
-    
     with col2:
         clear_button = st.button("Clear Chat", key="clear_chat")
-    
+
     st.markdown('</div>', unsafe_allow_html=True)
-    
+
     # Handle Send Button
-    if send_button:
-        if user_input.strip() == "":
-            st.warning("Please enter a valid query.")
-        else:
-            # Add user message to chat history
-            st.session_state.messages.append(("user", user_input))
-            
-            # Generate AI response
-            try:
-                llm = get_llm("chat")
-                profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
-                chat_history = ''.join([f'{r.capitalize()}: {c}' for r, c in st.session_state.messages[-6:]])
-                
-                prompt = f"""
-                    You are a professional medical assistant AI creating a personalized, phase-wise treatment plan.
-                    Your goal is to provide a comprehensive, easy-to-follow guide tailored to the patient’s condition and background.
-                    Guidelines:
-                    - Always state that this is not a substitute for professional medical advice.
-                    - Be empathetic and prioritize patient safety.
-                    - Include practical, realistic steps that the patient can implement.
-                    
-                    Patient Name: {profile_info}
-                    Condition: {condition}
-                    Duration: {duration}
-                    Severity: {severity}
-                    Age Group: {age_group}
-                    Pre-existing Conditions: {', '.join(medical_conditions) if medical_conditions else 'None'}
-                    Current Medications: {medications}
-                    
-                    Provide a detailed, phase-wise treatment plan including:
-                    ### Phase 1: Immediate Actions
-                    - Specific medications (dosages and frequency).
-                    - Lifestyle modifications (diet, rest, activity).
-                    
-                    ### Phase 2: Short-Term Goals (1-2 weeks)
-                    - Follow-up care recommendations.
-                    - Monitoring parameters (what to track daily or weekly).
-                    
-                    ### Phase 3: Long-Term Management (Beyond 2 weeks)
-                    - Sustained lifestyle changes.
-                    - Potential complications to monitor.
-                    - Tips for managing flare-ups or setbacks.
-                    
-                    Format your response clearly using markdown headers and bullet points.
-                    Answer:
-                    """
-                
-                with st.spinner("🧠 Generating response..."):
-                    response = llm.invoke(prompt).strip()
-                
-                if not response or "error" in response.lower():
-                    response = "I'm unable to respond at this time due to technical issues. Please try again later."
-                
-                # Add assistant response to chat history
-                st.session_state.messages.append(("assistant", response))
-                st.rerun()
-            
-            except Exception as e:
-                st.error(f"🚨 Error generating response: {str(e)}")
-    
-    # Handle Clear Chat Button
+    if send_button and user_input.strip():
+        st.session_state.messages.append(("user", user_input))
+
+        try:
+            llm = get_llm("chat")
+            profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
+
+            prompt = f"""
+You are a professional medical assistant AI creating a personalized, phase-wise treatment plan.
+Your goal is to provide a comprehensive, easy-to-follow guide tailored to the patient’s condition and background.
+Guidelines:
+- Always state that this is not a substitute for professional medical advice.
+- Be empathetic and prioritize patient safety.
+- Include practical, realistic steps that the patient can implement.
+
+Patient Profile: {profile_info}
+
+Provide a detailed, phase-wise treatment plan including:
+### Phase 1: Immediate Actions
+- Specific medications (dosages and frequency).
+- Lifestyle modifications (diet, rest, activity).
+
+### Phase 2: Short-Term Goals (1-2 weeks)
+- Follow-up care recommendations.
+- Monitoring parameters (what to track daily or weekly).
+
+### Phase 3: Long-Term Management (Beyond 2 weeks)
+- Sustained lifestyle changes.
+- Potential complications to monitor.
+- Tips for managing flare-ups or setbacks.
+
+Format your response clearly using markdown headers and bullet points.
+Answer:
+"""
+
+            with st.spinner("🧠 Generating response..."):
+                response = llm.invoke(prompt).strip() or "I'm unable to respond at this time."
+
+            st.session_state.messages.append(("assistant", response))
+            st.rerun()
+
+        except Exception as e:
+            st.error(f"🚨 Error generating response: {str(e)}")
+
+    # Clear chat button
     if clear_button:
         st.session_state.messages = []
         st.success("Chat history cleared successfully!")
-    
-    # Export Chat History Button
+
+    # Export chat log
     if st.session_state.messages:
         chat_log = "\n".join([f"{role.capitalize()}: {msg}" for role, msg in st.session_state.messages])
         st.download_button(
@@ -481,8 +464,9 @@ elif page == "Chat":
             file_name="chat_log.txt",
             mime="text/plain"
         )
-    
+
     st.markdown('</div>', unsafe_allow_html=True)
+
 
 elif page == "Symptoms":
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -493,44 +477,42 @@ elif page == "Symptoms":
         Enter your symptoms, and our AI-powered assistant will analyze them to provide potential causes and recommendations.
     </p>
     """, unsafe_allow_html=True)
-    
+
     # Step 1: Input Symptoms
     st.subheader("Step 1: Describe Your Symptoms")
     col1, col2 = st.columns(2)
-    
+
     with col1:
         symptom_1 = st.text_input("Symptom 1", placeholder="e.g., Headache")
         symptom_2 = st.text_input("Symptom 2", placeholder="e.g., Fatigue")
         symptom_3 = st.text_input("Symptom 3", placeholder="e.g., Nausea")
-    
+
     with col2:
         duration = st.selectbox("Duration", ["Less than 1 day", "1-3 days", "4-7 days", "More than 7 days"])
         severity = st.select_slider("Severity", options=["Mild", "Moderate", "Severe"], value="Moderate")
         location = st.text_input("Location of Symptoms", placeholder="e.g., Head, Abdomen")
-    
+
     # Step 2: Additional Information
     st.subheader("Step 2: Provide Additional Details (Optional)")
     age_group = st.selectbox("Age Group", ["Child (0-12)", "Teen (13-19)", "Adult (20-64)", "Senior (65+)"])
-    
     medical_conditions = st.multiselect(
         "Pre-existing Medical Conditions",
         ["Diabetes", "Hypertension", "Asthma", "Heart Disease", "None"]
     )
-    
     medications = st.text_area("Current Medications", placeholder="List any medications you are taking")
-    
+
     # Analyze Button
     if st.button("🧠 Analyze Symptoms", key="analyze_symptoms"):
         symptoms = [symptom_1, symptom_2, symptom_3]
         valid_symptoms = [s.strip() for s in symptoms if s.strip()]
-        
+
         if not valid_symptoms:
             st.error("❌ Please enter at least one symptom.")
         else:
             try:
-                llm = get_llm("symptoms")
+                llm = get_llm("symptoms")  # Make sure this function exists
                 profile_info = json.dumps(st.session_state.profile_data) if st.session_state.profile_complete else "{}"
-                
+
                 prompt = f"""
 You are an expert medical assistant AI helping patients understand their reported symptoms. 
 Your role is to provide clear, empathetic, and informative guidance based on the input provided. 
@@ -558,225 +540,128 @@ Please structure your response clearly with the following headings:
 
 Answer:
                 """
-                
+
                 with st.spinner("🧠 Analyzing symptoms..."):
-                    response = llm.invoke(prompt).strip()
-                
-                if not response or "error" in response.lower():
-                    response = "I'm unable to analyze symptoms at this time due to technical issues. Please try again later."
-                
+                    response = llm.invoke(prompt).strip() or "I'm unable to analyze symptoms at this time."
+
                 st.markdown("### 🧠 Symptom Analysis")
                 st.markdown(response)
-            
+
+                # Save analysis for export
+                st.session_state.symptom_analysis = response
+
             except Exception as e:
                 st.error(f"🚨 Error analyzing symptoms: {str(e)}")
-    
+
     # Export Analysis Button
-    if "symptom_analysis" in st.session_state and st.session_state.symptom_analysis:
+    if "symptom_analysis" in st.session_state:
         st.download_button(
             label="Export Analysis",
             data=st.session_state.symptom_analysis,
             file_name="symptom_analysis.txt",
             mime="text/plain"
         )
-    
+
     st.markdown('</div>', unsafe_allow_html=True)
+
 
 elif page == "Treatment":
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 💊 Personalized Treatment Planner")
     
-    # Section Header
     st.markdown("""
     <p style="font-size: 18px; color: #34495e;">
         Create a personalized, phase-wise treatment plan based on your condition and duration.
     </p>
     """, unsafe_allow_html=True)
-    
+
     # Step 1: Input Condition and Duration
     st.subheader("Step 1: Describe Your Condition")
     col1, col2 = st.columns(2)
-    
+
     with col1:
         condition = st.text_input("Condition or Diagnosis", placeholder="e.g., Diabetes, Hypertension")
         duration = st.selectbox("Duration", ["Acute (short-term)", "Chronic (long-term)"])
-    
+
     with col2:
         severity = st.select_slider("Severity", options=["Mild", "Moderate", "Severe"], value="Moderate")
         age_group = st.selectbox("Age Group", ["Child (0-12)", "Teen (13-19)", "Adult (20-64)", "Senior (65+)"])
-    
-    # Step 2: Additional Information
+
+    # Step 2: Additional Info
     st.subheader("Step 2: Provide Additional Details (Optional)")
     medical_conditions = st.multiselect(
         "Pre-existing Medical Conditions",
         ["Diabetes", "Hypertension", "Asthma", "Heart Disease", "None"]
     )
-    
     medications = st.text_area("Current Medications", placeholder="List any medications you are taking")
-    
-    # Generate Treatment Plan Button
+
+    # Generate Plan Button
     if st.button("🧠 Generate Treatment Plan", key="generate_treatment"):
-        # Validate Inputs
         if not condition.strip():
             st.error("❌ Please enter a valid condition.")
         else:
-            # Prepare Prompt for LLM
             try:
                 llm = get_llm("treatment")
                 profile_name = st.session_state.profile_data.get("name", "Unknown")
-                
+
                 prompt = f"""
-                You are a professional medical assistant AI creating a personalized, phase-wise treatment plan.
-                Use the following guidelines:
-                - Be empathetic, informative, and clear.
-                - Always mention that you're not a substitute for real medical advice.
-                - If unsure, recommend consulting a physician.
-                
-                Patient Name: {profile_name}
-                Condition: {condition}
-                Duration: {duration}
-                Severity: {severity}
-                Age Group: {age_group}
-                Pre-existing Conditions: {', '.join(medical_conditions) if medical_conditions else 'None'}
-                Current Medications: {medications}
-                
-                Provide a detailed, phase-wise treatment plan including:
-                ### Phase 1: Immediate Actions
-                - Medications (with dosages and frequency).
-                - Lifestyle modifications.
-                
-                ### Phase 2: Short-Term Goals (1-2 weeks)
-                - Follow-up care recommendations.
-                - Monitoring parameters.
-                
-                ### Phase 3: Long-Term Management (Beyond 2 weeks)
-                - Sustained lifestyle changes.
-                - Potential complications to monitor.
-                
-                Output format:
-                ### 🩺 Personalized Treatment Plan for {profile_name}
-                #### Phase 1: Immediate Actions
-                - [Provide actionable steps]
-                #### Phase 2: Short-Term Goals
-                - [Provide short-term goals]
-                #### Phase 3: Long-Term Management
-                - [Provide long-term strategies]
-                
-                Answer:
+You are a professional medical assistant AI creating a personalized, phase-wise treatment plan.
+Use the following guidelines:
+- Be empathetic, informative, and clear.
+- Always mention that you're not a substitute for real medical advice.
+- If unsure, recommend consulting a physician.
+
+Patient Name: {profile_name}
+Condition: {condition}
+Duration: {duration}
+Severity: {severity}
+Age Group: {age_group}
+Pre-existing Conditions: {', '.join(medical_conditions) if medical_conditions else 'None'}
+Current Medications: {medications}
+
+Provide a detailed, phase-wise treatment plan including:
+### Phase 1: Immediate Actions
+- Medications (with dosages and frequency).
+- Lifestyle modifications.
+
+### Phase 2: Short-Term Goals (1-2 weeks)
+- Follow-up care recommendations.
+- Monitoring parameters.
+
+### Phase 3: Long-Term Management (Beyond 2 weeks)
+- Sustained lifestyle changes.
+- Potential complications to monitor.
+
+Output format:
+### 🩺 Personalized Treatment Plan for {profile_name}
+#### Phase 1: Immediate Actions
+- [Provide actionable steps]
+#### Phase 2: Short-Term Goals
+- [Provide short-term goals]
+#### Phase 3: Long-Term Management
+- [Provide long-term strategies]
+
+Answer:
                 """
-                
+
                 with st.spinner("🧠 Generating treatment plan..."):
-                    response = llm.invoke(prompt).strip()
-                
-                if not response or "error" in response.lower():
-                    response = "I'm unable to generate a treatment plan at this time due to technical issues. Please try again later."
-                
+                    response = llm.invoke(prompt).strip() or "I'm unable to generate a treatment plan at this time."
+
                 st.markdown(f"### 🩺 Personalized Treatment Plan for {profile_name}")
                 st.markdown(response)
-            
+
             except Exception as e:
                 st.error(f"🚨 Error generating treatment plan: {str(e)}")
-    
+
     # Export Treatment Plan Button
-    if "treatment_plan" in st.session_state and st.session_state.treatment_plan:
+    if "treatment_plan" in st.session_state:
         st.download_button(
             label="Export Treatment Plan",
             data=st.session_state.treatment_plan,
             file_name="treatment_plan.txt",
             mime="text/plain"
         )
-    
-    # Section: Log Daily Metrics
-    st.subheader("Step 3: Log Daily Metrics (Optional)")
-    metric_type = st.selectbox("Select Metric Type", ["Glucose Levels", "Blood Pressure", "Peak Flow", "HbA1c"])
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if metric_type == "Glucose Levels":
-            glucose_value = st.number_input("Glucose Level (mg/dL)", min_value=50, max_value=300, step=1)
-            glucose_date = st.date_input("Date", value=datetime.today())
-        
-        elif metric_type == "Blood Pressure":
-            systolic = st.number_input("Systolic BP", min_value=90, max_value=200, step=1)
-            diastolic = st.number_input("Diastolic BP", min_value=60, max_value=130, step=1)
-            bp_date = st.date_input("Date", value=datetime.today())
-        
-        elif metric_type == "Peak Flow":
-            peak_flow_value = st.number_input("Peak Flow (L/min)", min_value=100, max_value=800, step=1)
-            peak_flow_date = st.date_input("Date", value=datetime.today())
-        
-        elif metric_type == "HbA1c":
-            hba1c_value = st.number_input("HbA1c (%)", min_value=4.0, max_value=12.0, step=0.1)
-            hba1c_date = st.date_input("Date", value=datetime.today())
-    
-    with col2:
-        if st.button("✅ Log Metric"):
-            if metric_type == "Glucose Levels":
-                st.session_state.glucose_log.append({"value": glucose_value, "date": glucose_date.strftime("%Y-%m-%d")})
-                st.success("Glucose level logged successfully!")
-            
-            elif metric_type == "Blood Pressure":
-                st.session_state.bp_log.append({
-                    "systolic": systolic,
-                    "diastolic": diastolic,
-                    "date": bp_date.strftime("%Y-%m-%d")
-                })
-                st.success("Blood pressure logged successfully!")
-            
-            elif metric_type == "Peak Flow":
-                st.session_state.asthma_log.append({
-                    "peak_flow": peak_flow_value,
-                    "date": peak_flow_date.strftime("%Y-%m-%d")
-                })
-                st.success("Peak flow logged successfully!")
-            
-            elif metric_type == "HbA1c":
-                st.session_state.hba1c_log.append({
-                    "hba1c": hba1c_value,
-                    "date": hba1c_date.strftime("%Y-%m-%d")
-                })
-                st.success("HbA1c logged successfully!")
-    
-    # Section: Historical Data Visualization
-    st.subheader("Step 4: Historical Data Visualization")
-    visualization_type = st.selectbox("Select Metric to Visualize", ["Glucose Levels", "Blood Pressure", "Peak Flow", "HbA1c"])
-    
-    if visualization_type == "Glucose Levels" and st.session_state.glucose_log:
-        df_gluc = pd.DataFrame(st.session_state.glucose_log)
-        fig = px.line(df_gluc, x='date', y='value', title='Glucose Levels Over Time')
-        fig.update_layout(yaxis_title="Glucose (mg/dL)", xaxis_title="Date")
-        st.plotly_chart(fig, use_container_width=True)
-    
-    elif visualization_type == "Blood Pressure" and st.session_state.bp_log:
-        df_bp = pd.DataFrame(st.session_state.bp_log)
-        fig = px.line(df_bp, x='date', y=['systolic', 'diastolic'], title='Blood Pressure Over Time')
-        fig.update_layout(yaxis_title="Pressure (mmHg)", xaxis_title="Date")
-        st.plotly_chart(fig, use_container_width=True)
-    
-    elif visualization_type == "Peak Flow" and st.session_state.asthma_log:
-        df_asthma = pd.DataFrame(st.session_state.asthma_log)
-        fig = px.line(df_asthma, x='date', y='peak_flow', title='Peak Flow Over Time')
-        fig.update_layout(yaxis_title="Peak Flow (L/min)", xaxis_title="Date")
-        st.plotly_chart(fig, use_container_width=True)
-    
-    elif visualization_type == "HbA1c" and st.session_state.hba1c_log:
-        df_hba1c = pd.DataFrame(st.session_state.hba1c_log)
-        fig = px.line(df_hba1c, x='date', y='hba1c', title='HbA1c Over Time')
-        fig.update_layout(yaxis_title="HbA1c (%)", xaxis_title="Date")
-        st.plotly_chart(fig, use_container_width=True)
-    
-    # Section: Reset Logs
-    st.subheader("Step 5: Reset Logged Metrics")
-    if st.button("🔄 Reset All Logs", key="reset_logs"):
-        st.session_state.glucose_log = []
-        st.session_state.bp_log = []
-        st.session_state.asthma_log = []
-        st.session_state.hba1c_log = []
-        st.success("All logs have been reset.")
-    
-    # Footer
-    st.markdown('<footer>© Health Assistant 2023</footer>', unsafe_allow_html=True)
+
     st.markdown('</div>', unsafe_allow_html=True)
 
 elif page == "Diseases":
